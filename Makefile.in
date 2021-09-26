@@ -1,0 +1,38 @@
+SHELL = /bin/sh
+CFLAGS = -g -Wall -pedantic -std=c99 @PKGS_CFLAGS@ -DTRACE
+LDFLAGS = @PKGS_LDFLAGS@
+
+prefix = @prefix@
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+datarootdir = $(prefix)/share
+mandir = $(datarootdir)/man
+
+INSTALL ?= install
+INSTALLFLAGS ?=
+
+SRCS=mxswm.c stack.c client.c event.c menu.c keyboard.c
+PROG=mxswm
+
+OBJS=$(SRCS:.c=.o)
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(CC) -o$@ $(OBJS) $(LDFLAGS)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+clean:
+	rm -f $(OBJS) $(PROG)
+
+install: $(PROG)
+	if [ ! -x $(DESTDIR)$(bindir) ] ; then \
+		mkdir -p $(DESTDIR)$(bindir) ; fi
+	$(INSTALL) $(INSTALLFLAGS) $(PROG) $(DESTDIR)$(bindir)
+
+uninstall:
+	if [ -e $(DESTDIR)$(bindir)/$(PROG) ] ; then \
+		rm $(DESTDIR)$(bindir)/$(PROG) ; fi
