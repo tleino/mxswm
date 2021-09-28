@@ -145,8 +145,6 @@ main(int argc, char *argv[])
 	select_root_events(dpy);
 	dump_clients();
 
-	add_stack(NULL);
-	add_stack(NULL);
 	dump_stacks();
 
 	bind_keys();
