@@ -24,6 +24,8 @@ static Window _menu;
 static GC _gc, _focus_gc;
 static struct client *current;
 
+static void draw_menu(void);
+
 void
 create_menu()
 {
@@ -53,6 +55,26 @@ select_menu_item()
 		focus_client(current);
 		current = NULL;
 	}
+}
+
+void
+select_menu_item_right()
+{
+	focus_stack_forward();
+	if (current != NULL)
+		focus_client(current);
+	focus_stack_backward();
+	draw_menu();
+}
+
+void
+select_menu_item_left()
+{
+	focus_stack_backward();
+	if (current != NULL)
+		focus_client(current);
+	focus_stack_forward();
+	draw_menu();
 }
 
 void
