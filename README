@@ -17,10 +17,15 @@ F2		Remove window stack
 LeftWindows	Select stack on the left
 RightWindows	Select stack on the right
 
+Clients
+-------
+
+Menu		Cycle to next client that is not in another stack
+
 Client menu
 -----------
 
-Menu		Open menu, focus next item in menu list
+Ctrl+Menu	Open menu, focus next item in menu list
 Up		Focus previous item in menu list
 Down		Focus next item in menu list
 Left		Move selected item to a stack on the left side

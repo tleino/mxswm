@@ -178,6 +178,33 @@ focus_client(struct client *client)
 }
 
 void
+focus_client_cycle_here()
+{
+	struct client *client, *np;
+	struct stack *stack;
+
+	client = current_client();
+	if (client == NULL)
+		return;
+
+	stack = current_stack();
+	for (np = client->next; np != NULL; np = np->next) {
+		if (find_stack(np) != NULL)
+			continue;
+
+		focus_client(np);
+		return;
+	}
+	for (np = _head; np != client && np != NULL; np = np->next) {
+		if (find_stack(np) != NULL)
+			continue;
+
+		focus_client(np);
+		return;
+	}
+}
+
+void
 focus_client_forward()
 {
 	struct client *client;

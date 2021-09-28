@@ -70,6 +70,7 @@ void remove_client(struct client *);
 void focus_client(struct client *);
 void focus_client_forward(void);
 void focus_client_backward(void);
+void focus_client_cycle_here(void);
 struct client *current_client(void);
 struct client *next_client(struct client *);
 struct client *prev_client(struct client *);
