@@ -37,46 +37,49 @@ static const struct binding keybinding[] = {
 	    focus_stack_backward },
 	{ XK_Super_R, DONT_CHECK_MASK,
 	    focus_stack_forward },
-	{ XK_Menu, 0, toggle_menu },
+	{ XK_Menu, 0, open_menu },
 	{ XK_F1, 0, add_stack_here },
 	{ XK_F2, 0, remove_stack_here },
 };
 
 static const struct binding menubinding[] = {
-	{ XK_Menu, 0, toggle_menu },
+	{ XK_Menu, 0, focus_menu_forward },
 	{ XK_Up, 0, focus_menu_backward },
 	{ XK_Down, 0, focus_menu_forward },
 	{ XK_Return, 0, select_menu_item },
+	{ XK_Escape, 0, close_menu }
 };
 
 static void _unbind_keys(Display *, Window, const struct binding *, size_t sz);
 static void _bind_keys(Display *, Window, const struct binding *, size_t sz);
 void _do_keyaction(XKeyEvent *xkey, const struct binding *bindings, size_t sz);
 
-static int menu = 0;
+static int menu;
 
 void
-toggle_menu()
+close_menu()
 {
-	menu ^= 1;
+	menu = 0;
+	hide_menu();
+	_unbind_keys(display(),
+	    DefaultRootWindow(display()), menubinding,
+	    ARRLEN(menubinding));
+	_bind_keys(display(),
+	    DefaultRootWindow(display()), keybinding,
+	    ARRLEN(keybinding));
+}
 
-	if (menu) {
-		show_menu();
-		_unbind_keys(display(),
-		    DefaultRootWindow(display()), keybinding,
-		    ARRLEN(keybinding));
-		_bind_keys(display(),
-		    DefaultRootWindow(display()), menubinding,
-		    ARRLEN(menubinding));
-	} else {
-		hide_menu();
-		_unbind_keys(display(),
-		    DefaultRootWindow(display()), menubinding,
-		    ARRLEN(menubinding));
-		_bind_keys(display(),
-		    DefaultRootWindow(display()), keybinding,
-		    ARRLEN(keybinding));
-	}
+void
+open_menu()
+{
+	menu = 1;
+	show_menu();
+	_unbind_keys(display(),
+	    DefaultRootWindow(display()), keybinding,
+	    ARRLEN(keybinding));
+	_bind_keys(display(),
+	    DefaultRootWindow(display()), menubinding,
+	    ARRLEN(menubinding));
 }
 
 void

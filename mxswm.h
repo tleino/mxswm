@@ -80,7 +80,8 @@ Display *display(void);
 
 int handle_event(XEvent *);
 
-void toggle_menu(void);
+void open_menu(void);
+void close_menu(void);
 void focus_menu_forward(void);
 void focus_menu_backward(void);
 void select_menu_item(void);

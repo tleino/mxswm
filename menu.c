@@ -48,7 +48,7 @@ create_menu()
 void
 select_menu_item()
 {
-	toggle_menu();
+	close_menu();
 	if (current != NULL) {
 		focus_client(current);
 		current = NULL;
