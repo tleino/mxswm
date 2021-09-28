@@ -83,7 +83,11 @@ manageable(Display *d, Window w)
 	int mapped, redirectable;
 
 	XGetWindowAttributes(d, w, &wa);
+#if 0
 	mapped = (wa.map_state != IsUnmapped);
+#else
+	mapped = 1;
+#endif
 	redirectable = (wa.override_redirect != True);
 
 	return (mapped && redirectable);

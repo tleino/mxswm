@@ -18,6 +18,7 @@
 
 #include "mxswm.h"
 
+#include <X11/Xutil.h>
 #include <assert.h>
 #include <err.h>
 #include <stdlib.h>
@@ -31,6 +32,8 @@ struct client {
 
 static struct client *_head;
 static struct client *_focus;
+
+static void transition_client_state(struct client *, unsigned long);
 
 struct client *
 add_client(Window window, struct client *after)
@@ -138,6 +141,8 @@ focus_client(struct client *client)
 
 	if (_focus != NULL) {
 		window = _focus->window;
+		if (stack->client == _focus)
+			transition_client_state(_focus, IconicState);
 		XSetWindowBorderWidth(dpy, window, BORDERWIDTH);
 		XSetWindowBorder(dpy, window, 5485488);
 	}
@@ -147,6 +152,7 @@ focus_client(struct client *client)
 		return;
 
 	window = _focus->window;
+	transition_client_state(client, NormalState);
 	XMoveWindow(dpy, window, STACK_X(stack), STACK_Y(stack));
 	XResizeWindow(dpy, window, STACK_WIDTH(stack), STACK_HEIGHT(stack));
 	XSetWindowBorderWidth(dpy, window, BORDERWIDTH);
@@ -196,6 +202,26 @@ current_client()
 		focus_client(_head);
 
 	return _focus;
+}
+
+static void
+transition_client_state(struct client *client, unsigned long state)
+{
+	unsigned long data[2];
+	Atom wmstate;
+	Display *dpy = display();
+
+	data[0] = state;
+	data[1] = None;
+
+	wmstate = XInternAtom(dpy, "WM_STATE", False);
+
+	XChangeProperty (dpy, client->window, wmstate, wmstate, 32,
+	    PropModeReplace, (unsigned char *) data, 2);
+	if (state == IconicState)
+		XUnmapWindow(dpy, client->window);
+	else if (state == NormalState)
+		XMapWindow(dpy, client->window);
 }
 
 #if (TRACE || TEST)
