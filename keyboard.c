@@ -49,6 +49,8 @@ static const struct binding menubinding[] = {
 	{ XK_Right, 0, select_menu_item_right },
 	{ XK_Left, 0, select_menu_item_left },
 	{ XK_Return, 0, select_menu_item },
+	{ XK_Super_L, DONT_CHECK_MASK, close_menu },
+	{ XK_Super_R, DONT_CHECK_MASK, close_menu },
 	{ XK_Escape, 0, close_menu }
 };
 
