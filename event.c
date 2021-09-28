@@ -17,11 +17,26 @@
  */
 
 #include "mxswm.h"
+#include <err.h>
 
 int
 handle_event(XEvent *event)
 {
-	if (event->type == KeyRelease)
+	Window window;
+
+	switch (event->type) {
+	case KeyRelease:
 		do_keyaction(&(event->xkey));
+		break;
+	case MapRequest:
+		window = event->xmaprequest.window;
+		if (manageable(window)) {
+			if (add_client(window, NULL) == NULL)
+				warn("add_client");
+			focus_client(find_client(window));
+		} else
+			warnx("did not capture %lx", window);
+		break;
+	}
 	return 1;
 }

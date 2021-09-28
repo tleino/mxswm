@@ -25,7 +25,6 @@ Display *_display;
 
 static void select_root_events(Display *);
 static int wm_rights_error(Display *, XErrorEvent *);
-static int manageable(Display *, Window);
 
 static void
 select_root_events(Display *display)
@@ -64,7 +63,7 @@ capture_existing_windows(Display *display)
 	}
 
 	for (i = 0; i < nchildren; i++) {
-		if (manageable(display, children[i])) {
+		if (manageable(children[i])) {
 			if (add_client(children[i], NULL) == NULL)
 				warn("add_client");
 			focus_client(find_client(children[i]));
@@ -76,11 +75,12 @@ capture_existing_windows(Display *display)
 		XFree(children);
 }
 
-static int
-manageable(Display *d, Window w)
+int
+manageable(Window w)
 {
 	XWindowAttributes wa;
 	int mapped, redirectable;
+	Display *d = display();
 
 	XGetWindowAttributes(d, w, &wa);
 #if 0

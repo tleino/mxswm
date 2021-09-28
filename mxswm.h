@@ -78,6 +78,8 @@ unsigned short display_height(void);
 unsigned short display_width(void);
 Display *display(void);
 
+int manageable(Window);
+
 int handle_event(XEvent *);
 
 void open_menu(void);
