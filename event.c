@@ -23,17 +23,35 @@ int
 handle_event(XEvent *event)
 {
 	Window window;
+	struct client *client, *current;
 
 	switch (event->type) {
 	case KeyRelease:
 		do_keyaction(&(event->xkey));
 		break;
+	case DestroyNotify:
+		window = event->xdestroywindow.window;
+		client = have_client(window);
+		current = current_client();
+		if (client != NULL) {
+			if (client == current)
+				remove_client(client);
+			else {
+				remove_client(client);
+				focus_client(current);
+			}
+		} else
+			warnx("destroy of %lx observed without action",
+			    window);
+		break;
 	case MapRequest:
 		window = event->xmaprequest.window;
 		if (manageable(window)) {
-			if (add_client(window, NULL) == NULL)
+			client = add_client(window, NULL);
+			if (client == NULL)
 				warn("add_client");
-			focus_client(find_client(window));
+			else
+				focus_client(client);
 		} else
 			warnx("did not capture %lx", window);
 		break;

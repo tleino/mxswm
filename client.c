@@ -71,6 +71,21 @@ client_name(struct client *client)
 }
 
 struct client *
+have_client(Window window)
+{
+	struct client *np;
+
+	for (np = _head; np != NULL; np = np->next) {
+		if (np->window != window)
+			continue;
+
+		return np;
+	}
+
+	return NULL;
+}
+
+struct client *
 find_client(Window window)
 {
 	struct client *np;

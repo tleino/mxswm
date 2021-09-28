@@ -65,6 +65,7 @@ void dump_stacks(void);
 
 struct client *add_client(Window, struct client *);
 struct client *find_client(Window);
+struct client *have_client(Window);
 void remove_client(struct client *);
 void focus_client(struct client *);
 void focus_client_forward(void);
