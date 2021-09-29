@@ -156,10 +156,10 @@ focus_client(struct client *client)
 
 	if (_focus != NULL) {
 		window = _focus->window;
-		if (stack->client == _focus)
-			transition_client_state(_focus, IconicState);
 		XSetWindowBorderWidth(dpy, window, BORDERWIDTH);
 		XSetWindowBorder(dpy, window, 5485488);
+		if (stack->client == _focus)
+			transition_client_state(_focus, IconicState);
 	}
 
 	_focus = client;
@@ -264,6 +264,7 @@ transition_client_state(struct client *client, unsigned long state)
 		XUnmapWindow(dpy, client->window);
 	else if (state == NormalState)
 		XMapWindow(dpy, client->window);
+	XSync(dpy, False);
 }
 
 #if (TRACE || TEST)
