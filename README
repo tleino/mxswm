@@ -20,18 +20,19 @@ RightWindows	Select stack on the right
 Clients
 -------
 
-Menu		Cycle to next client that is not in another stack
+Menu		Cycle once to next client that is not in another stack
 
 Client menu
 -----------
 
-Ctrl+Menu	Open menu, focus next item in menu list
+Ctrl+Menu	Open menu
+Esc		Close menu
 Up		Focus previous item in menu list
 Down		Focus next item in menu list
+Menu		Focus next item in menu list
+Enter		Select menu item and close menu
 Left		Move selected item to a stack on the left side
 Right		Move selected item to a stack on the right side
-Enter		Select menu item and close menu
-Esc		Close menu
 
 Build
 =====

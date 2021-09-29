@@ -148,6 +148,25 @@ remove_client(struct client *client)
 }
 
 void
+top_client(struct client *client)
+{
+	if (client == NULL)
+		return;
+	if (_head == client)
+		return;
+
+	if (client->next != NULL)
+		client->next->prev = client->prev;
+	if (client->prev != NULL)
+		client->prev->next = client->next;
+
+	client->prev = NULL;
+	client->next = _head;
+	_head->prev = client;
+	_head = client;
+}
+
+void
 focus_client(struct client *client)
 {
 	Display *dpy = display();
@@ -175,6 +194,8 @@ focus_client(struct client *client)
 	XRaiseWindow(dpy, window);
 	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
 	stack->client = client;
+
+	top_client(client);
 }
 
 void
