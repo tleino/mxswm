@@ -25,7 +25,7 @@ Menu		Cycle once to next client that is not in another stack
 Client menu
 -----------
 
-Ctrl+Menu	Open menu
+Ctrl+Menu	Open menu / select menu item and close menu
 Esc		Close menu
 Up		Focus previous item in menu list
 Down		Focus next item in menu list

@@ -52,7 +52,8 @@ static const struct binding menubinding[] = {
 	{ XK_Return, 0, select_menu_item },
 	{ XK_Super_L, DONT_CHECK_MASK, close_menu },
 	{ XK_Super_R, DONT_CHECK_MASK, close_menu },
-	{ XK_Escape, 0, close_menu }
+	{ XK_Escape, 0, close_menu },
+	{ XK_Menu, ControlMask, select_menu_item },
 };
 
 static void _unbind_keys(Display *, Window, const struct binding *, size_t sz);
