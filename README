@@ -31,8 +31,10 @@ Up		Focus previous item in menu list
 Down		Focus next item in menu list
 Menu		Focus next item in menu list
 Enter		Select menu item and close menu
-Left		Move selected item to a stack on the left side
-Right		Move selected item to a stack on the right side
+Left		Move selected item to a stack on the left side,
+		focus the stack and close the menu
+Right		Move selected item to a stack on the right side,
+		focus the stack and close the menu
 
 Build
 =====

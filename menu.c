@@ -63,8 +63,7 @@ select_menu_item_right()
 	focus_stack_forward();
 	if (current != NULL)
 		focus_client(current);
-	focus_stack_backward();
-	draw_menu();
+	close_menu();
 }
 
 void
@@ -73,8 +72,7 @@ select_menu_item_left()
 	focus_stack_backward();
 	if (current != NULL)
 		focus_client(current);
-	focus_stack_forward();
-	draw_menu();
+	close_menu();
 }
 
 void
