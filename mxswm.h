@@ -36,15 +36,26 @@ struct stack {
 	unsigned short height;
 	unsigned short x;
 	unsigned short y;
+	unsigned short num;
 	struct stack *next;
 	struct stack *prev;
 	struct client *client;
+};
+
+struct client {
+	Window window;
+	char *name;
+	struct stack *stack;
+	struct client *next;
+	struct client *prev;
 };
 
 #define STACK_WIDTH(_x) (_x)->width
 #define STACK_HEIGHT(_x) (_x)->height
 #define STACK_X(_x) (_x)->x
 #define STACK_Y(_x) (_x)->y
+
+#define CLIENT_STACK(_x) (_x)->stack
 
 struct stack *add_stack(struct stack *);
 void remove_stack(struct stack *);

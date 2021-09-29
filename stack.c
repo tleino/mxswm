@@ -25,6 +25,23 @@
 static struct stack *_head;
 static struct stack *_focus;
 
+static void
+renumber_stacks()
+{
+	struct stack *np;
+	size_t i;
+
+	/*
+	 * TODO: Consider replacing the whole stack management
+	 *       with a realloc()'d and memmove()'d array rather
+	 *       than playing with linked lists and we'd get the
+	 *       the numbers "for free".
+	 */
+	i = 0;
+	for (np = _head; np != NULL; np = np->next)
+		np->num = ++i;	
+}
+
 struct stack *
 find_stack(struct client *client)
 {
@@ -120,6 +137,7 @@ add_stack(struct stack *after)
 		focus_stack(sp);
 
 	resize_stacks();
+	renumber_stacks();
 	return sp;
 }
 
@@ -127,6 +145,7 @@ void
 remove_stack(struct stack *sp)
 {
 	struct stack *np;
+	struct client *client;
 
 	focus_stack_forward();
 	if (_focus == sp) {
@@ -148,7 +167,13 @@ remove_stack(struct stack *sp)
 		break;
 	}
 
+	client = NULL;
+	while ((client = next_client(client)) != NULL)
+		if (CLIENT_STACK(client) == sp)
+			CLIENT_STACK(client) = NULL;
+
 	resize_stacks();
+	renumber_stacks();
 }
 
 void

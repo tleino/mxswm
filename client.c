@@ -23,13 +23,6 @@
 #include <err.h>
 #include <stdlib.h>
 
-struct client {
-	Window window;
-	char *name;
-	struct client *next;
-	struct client *prev;
-};
-
 static struct client *_head;
 static struct client *_focus;
 
@@ -194,6 +187,7 @@ focus_client(struct client *client)
 	XRaiseWindow(dpy, window);
 	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
 	stack->client = client;
+	client->stack = stack;
 
 	top_client(client);
 }

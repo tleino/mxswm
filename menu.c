@@ -117,8 +117,13 @@ draw_menu()
 
 		if (name == NULL)
 			name = "???";
-		snprintf(buf, sizeof(buf),
-		    "%c %s", c, name);
+		if (CLIENT_STACK(client) == stack)
+			snprintf(buf, sizeof(buf), "%c %s", c, name);
+		else if (CLIENT_STACK(client) != NULL)
+			snprintf(buf, sizeof(buf), "%c %s [%d]", c, name,
+			CLIENT_STACK(client)->num);
+		else
+			snprintf(buf, sizeof(buf), "%c %s [??]", c, name);
 
 		if (client == current)
 			XDrawImageString(display(), _menu, _focus_gc, x, y,
