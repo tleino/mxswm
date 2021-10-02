@@ -1,10 +1,37 @@
 MaXed Stacks Window Manager for X11
 ===================================
 
-A simpler alternative for https://github.com/tleino/cocowm by the same
-author.
+This window manager keeps windows in a number of stacks of same size and
+allows quick changing between the windows using keyboard.
 
-WORK IN PROGRESS!
+This is useful for people who hate micromanaging the position and size
+of windows using mouse.
+
+If it is necessary to manually manage position and size of some windows,
+run a separate window manager better suited for the job in Xephyr.
+
+This window manager was originally created to be a simpler alternative
+for https://github.com/tleino/cocowm by the same author. Reaping the
+full benefit of cocowm requires a specialized command shell system.
+However, a simple maximizing window manager like mxswm is fine enough
+for most purposes when working with programs that were designed for
+the full screen view.
+
+At the moment mostly works, but is not flawless. Also, requires manual
+customization from mxswm.h for e.g. setting the fonts and borders.
+
+Feature TODO
+============
+
+ - Choose window by typing letters of its name (similar to
+   reverse-search or ^R in shells).
+
+ - Move between multiple windows without going through the menu,
+   i.e. make the existing "cycle to next client" function unlimited.
+
+ - Close windows from menu / close foreground window.
+
+ - Xinerama (multi-screen) support (can be copied from cocowm).
 
 Default key bindings
 ====================
@@ -12,8 +39,8 @@ Default key bindings
 Stacks
 ------
 
-F1		Add window stack
-F2		Remove window stack
+F1		Remove window stack
+F2		Add window stack
 LeftWindows	Select stack on the left
 RightWindows	Select stack on the right
 

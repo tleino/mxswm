@@ -24,8 +24,6 @@ static Window _menu;
 static GC _gc, _focus_gc;
 static struct client *current;
 
-static void draw_menu(void);
-
 void
 create_menu()
 {
@@ -37,12 +35,11 @@ create_menu()
 	h = display_height() / 2;
 	x = w / 2;
 	y = h / 2;
-	v = CWBackPixel | CWBorderPixel;
+	v = CWBackPixel;
 	a.background_pixel = 0;
-	a.border_pixel = 434344;
 	_menu = XCreateWindow(display(),
 	    DefaultRootWindow(display()),
-	    x, y, w, h, BORDERWIDTH, CopyFromParent,
+	    x, y, w, h, 0, CopyFromParent,
 	    InputOutput, CopyFromParent,
 	    v, &a);
 }
@@ -52,7 +49,7 @@ select_menu_item()
 {
 	close_menu();
 	if (current != NULL) {
-		focus_client(current);
+		focus_client(current, current->stack);
 		current = NULL;
 	}
 }
@@ -62,7 +59,7 @@ select_menu_item_right()
 {
 	focus_stack_forward();
 	if (current != NULL)
-		focus_client(current);
+		focus_client(current, current_stack());
 	close_menu();
 }
 
@@ -71,7 +68,7 @@ select_menu_item_left()
 {
 	focus_stack_backward();
 	if (current != NULL)
-		focus_client(current);
+		focus_client(current, current_stack());
 	close_menu();
 }
 
@@ -86,6 +83,9 @@ draw_menu()
 	char buf[256];
 	char c;
 
+	if (_menu == 0)
+		return;
+
 	if (_gc == 0) {
 		v.foreground = WhitePixel(display(), DefaultScreen(display()));
 		v.font = XLoadFont(display(), FONTNAME);
@@ -97,7 +97,7 @@ draw_menu()
 		    GCForeground | GCFont, &v);
 	}
 
-	XMoveWindow(display(), _menu, STACK_X(stack), STACK_Y(stack));
+	XMoveWindow(display(), _menu, STACK_X(stack), BORDERWIDTH);
 	XResizeWindow(display(), _menu, STACK_WIDTH(stack), STACK_HEIGHT(stack));
 	XRaiseWindow(display(), _menu);
 	XSync(display(), False);
@@ -108,9 +108,10 @@ draw_menu()
 	while ((client = next_client(client)) != NULL) {
 		name = client_name(client);
 
-		if (client == stack->client)
+		if (client == current_client())
 			c = '*';
-		else if (find_stack(client) != NULL)
+		else if (client->stack != current_client()->stack &&
+		    find_top_client(client->stack) == client)
 			c = '^';
 		else
 			c = ' ';

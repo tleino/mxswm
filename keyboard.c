@@ -39,8 +39,8 @@ static const struct binding keybinding[] = {
 	    focus_stack_forward },
 	{ XK_Menu, ControlMask, open_menu },
 	{ XK_Menu, 0, focus_client_cycle_here },
-	{ XK_F1, 0, add_stack_here },
-	{ XK_F2, 0, remove_stack_here },
+	{ XK_F1, 0, remove_stack_here },
+	{ XK_F2, 0, add_stack_here },
 };
 
 static const struct binding menubinding[] = {

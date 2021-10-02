@@ -21,9 +21,63 @@
 #include <assert.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 static struct stack *_head;
 static struct stack *_focus;
+
+static GC _gc;
+
+static void create_stack_titlebar(struct stack *);
+
+static void
+create_stack_titlebar(struct stack *stack)
+{
+	int x, y, w, h;
+	XSetWindowAttributes a;
+	unsigned long v;
+	Display *dpy;
+	XGCValues gcv;
+
+	dpy = display();
+
+	if (_gc == 0) {
+		gcv.foreground = BlackPixel(dpy, DefaultScreen(dpy));
+		gcv.font = XLoadFont(dpy, TITLEFONTNAME);
+		_gc = XCreateGC(dpy, DefaultRootWindow(dpy),
+		    GCForeground | GCFont, &gcv);
+	}
+
+	assert(BORDERWIDTH > 0);
+	w = BORDERWIDTH;
+	h = BORDERWIDTH;
+	x = BORDERWIDTH;
+	y = 0;
+	v = CWBackPixel;
+	a.background_pixel = TITLEBAR_NORMAL_COLOR;
+	stack->window = XCreateWindow(dpy,
+	    DefaultRootWindow(dpy),
+	    x, y, w, h, 0, CopyFromParent,
+	    InputOutput, CopyFromParent,
+	    v, &a);
+	XMapWindow(dpy, stack->window);
+}
+
+void
+draw_stack(struct stack *stack)
+{
+	Display *dpy;
+	struct client *client;
+
+	dpy = display();
+	client = find_top_client(stack);
+
+	XClearWindow(dpy, stack->window);
+	XRaiseWindow(dpy, stack->window);
+	if (client != NULL && client->name != NULL)
+		XDrawString(display(), stack->window, _gc, 0, 22,
+		    client->name, strlen(client->name));
+}
 
 static void
 renumber_stacks()
@@ -42,25 +96,20 @@ renumber_stacks()
 		np->num = ++i;	
 }
 
-struct stack *
-find_stack(struct client *client)
-{
-	struct stack *np;
-
-	for (np = _head; np != NULL; np = np->next) {
-		if (np->client == client)
-			return np;
-	}
-
-	return NULL;
-}
-
 void
-resize_stack(struct stack *sp, unsigned short width)
+resize_stack(struct stack *stack, unsigned short width)
 {
-	assert(sp != NULL);
+	Display *dpy;
 
-	sp->width = width;
+	assert(stack != NULL);
+
+	dpy = display();
+	stack->width = width;
+
+	XMoveWindow(dpy, stack->window, stack->x, 0);
+	XResizeWindow(dpy, stack->window, stack->width, BORDERWIDTH);
+	resize_client(find_top_client(stack));
+	draw_stack(stack);
 }
 
 void
@@ -75,17 +124,15 @@ resize_stacks()
 		n++;
 	assert(n > 0);
 
-	width = display_width();
+	width = display_width() - BORDERWIDTH;
 	width /= n;
-	width -= (BORDERWIDTH * 2);
+	width -= BORDERWIDTH;
 	x = 0;
 	for (np = _head; np != NULL; np = np->next) {
+		x += BORDERWIDTH;
 		np->x = x;
 		x += width;
-		x += (BORDERWIDTH * 2);
 		resize_stack(np, width);
-		if (np->client != NULL)
-			focus_client(np->client);
 	}
 }
 
@@ -110,78 +157,102 @@ remove_stack_here()
 struct stack *
 add_stack(struct stack *after)
 {
-	struct stack *sp;
+	struct stack *stack;
 
-	sp = malloc(sizeof(struct stack));
-	if (sp == NULL)
+	stack = malloc(sizeof(struct stack));
+	if (stack == NULL)
 		return NULL;
 
-	sp->height = display_height() - (BORDERWIDTH*2);
-	sp->width = 0;
-	sp->x = 0;
-	sp->y = 0;
-	sp->client = NULL;
+	stack->height = display_height() - BORDERWIDTH;
+	stack->width = 0;
+	stack->x = 0;
+	stack->y = 0;
 
-	sp->prev = after;
+	stack->prev = after;
 	if (after != NULL) {
-		sp->next = after->next;
-		after->next = sp;
+		/*
+		 * Insert after 'after'.
+		 */
+		stack->next = after->next;
+		after->next = stack;
+		if (stack->next != NULL)
+			stack->next->prev = stack;
 	} else {
-		sp->next = _head;
-		if (_head != NULL)
-			_head->prev = sp;
-		_head = sp;
+		/*
+		 * Insert to head.
+		 */
+		stack->next = _head;
+		_head = stack;
+		if (_head->next != NULL)
+			_head->next->prev = _head;
 	}
 
-	if (_focus == NULL)
-		focus_stack(sp);
+	create_stack_titlebar(stack);
 
 	resize_stacks();
 	renumber_stacks();
-	return sp;
+
+	if (_focus == NULL)
+		focus_stack(stack);
+
+	dump_stacks();
+
+	return stack;
 }
 
 void
-remove_stack(struct stack *sp)
+remove_stack(struct stack *stack)
 {
-	struct stack *np;
 	struct client *client;
 
-	focus_stack_forward();
-	if (_focus == sp) {
+	focus_stack_backward();
+	if (_focus == stack) {
 		warnx("cannot remove last stack");
 		return;
 	}
 
-	for (np = _head; np != NULL; np = np->next) {
-		if (np != sp)
-			continue;
+	if (stack->next != NULL)
+		stack->next->prev = stack->prev;
 
-		if (np->next != NULL)
-			np->next->prev = np->prev;
-		if (np->prev != NULL)
-			np->prev->next = np->next;
-		else if (np == _head)
-			_head = np->next;
-		free(sp);
-		break;
-	}
+	if (stack->prev != NULL)
+		stack->prev->next = stack->next;
+	else if (stack == _head)
+		_head = stack->next;
+
+	XUnmapWindow(display(), stack->window);
+	XDestroyWindow(display(), stack->window);
+	free(stack);
+
+	dump_stacks();
 
 	client = NULL;
 	while ((client = next_client(client)) != NULL)
-		if (CLIENT_STACK(client) == sp)
-			CLIENT_STACK(client) = NULL;
+		if (CLIENT_STACK(client) == stack)
+			CLIENT_STACK(client) = _focus;
 
-	resize_stacks();
 	renumber_stacks();
+	resize_stacks();
 }
 
 void
-focus_stack(struct stack *sp)
+focus_stack(struct stack *stack)
 {
-	_focus = sp;
+	struct stack *prev;
+
+	prev = _focus;
+	_focus = stack;
+
 	dump_stacks();
-	focus_client(sp->client);
+
+	focus_client(find_top_client(stack), stack);
+
+	if (prev != NULL) {
+		XSetWindowBackground(display(), prev->window, TITLEBAR_NORMAL_COLOR);
+		draw_stack(prev);
+	}
+
+	XSetWindowBackground(display(), stack->window, TITLEBAR_FOCUS_COLOR);
+	draw_stack(stack);
 }
 
 void
@@ -214,13 +285,11 @@ focus_stack_backward()
 struct stack *
 current_stack()
 {
-	struct stack *sp;
-
 	if (_focus == NULL) {
-		sp = add_stack(NULL);
-		if (sp == NULL)
+		_focus = add_stack(NULL);
+		if (_focus == NULL)
 			err(1, "add_stack");
-		focus_stack(sp);
+		focus_stack(_focus);
 	}
 
 	assert(_focus != NULL);

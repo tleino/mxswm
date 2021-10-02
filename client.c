@@ -22,11 +22,30 @@
 #include <assert.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 static struct client *_head;
 static struct client *_focus;
 
 static void transition_client_state(struct client *, unsigned long);
+
+void
+update_client_name(struct client *client)
+{
+	XTextProperty text;
+
+	if (XGetWMName(display(), client->window, &text) == 0) {
+		warnx("unable to get name");
+	} else {
+		if (client->name != NULL)
+			free(client->name);
+		client->name = malloc(text.nitems + 1);
+		if (client->name != NULL) {
+			memcpy(client->name, text.value, text.nitems);
+			client->name[text.nitems] = 0;
+		}
+	}
+}
 
 struct client *
 add_client(Window window, struct client *after)
@@ -38,22 +57,36 @@ add_client(Window window, struct client *after)
 		return NULL;
 
 	client->window = window;
+	client->name = NULL;
+	client->stack = current_stack();
 
 	client->prev = after;
 	if (after != NULL) {
+		/*
+		 * Insert after 'after'.
+		 */
 		client->next = after->next;
 		after->next = client;
+		if (client->next != NULL)
+			client->next->prev = client;
 	} else {
+		/*
+		 * Insert to head.
+		 */
 		client->next = _head;
-		if (_head != NULL)
-			_head->prev = client;
 		_head = client;
+		if (_head->next != NULL)
+			_head->next->prev = _head;
 	}
 
-	if (XFetchName(display(), window, &client->name) == 0)
-		warnx("unable to fetch name");
+	XSetWindowBorderWidth(display(), window, 0);
 
-	focus_client(client);
+	XSelectInput(display(), window, PropertyChangeMask);
+
+	update_client_name(client);
+	focus_client(client, NULL);
+	draw_menu();
+
 	return client;
 }
 
@@ -121,23 +154,36 @@ prev_client(struct client *client)
 void
 remove_client(struct client *client)
 {
+	focus_menu_forward();
+
+	if (client->next != NULL)
+		client->next->prev = client->prev;
+
+	if (client->prev != NULL)
+		client->prev->next = client->next;
+	else if (client == _head)
+		_head = client->next;
+
+	_focus = find_top_client(client->stack);
+	focus_client(_focus, client->stack);
+
+	if (client->name != NULL)
+		free(client->name);
+	free(client);
+
+	draw_menu();
+}
+
+struct client *
+find_top_client(struct stack *stack)
+{
 	struct client *np;
 
-	focus_client_forward();
+	for (np = _head; np != NULL; np = np->next)
+		if (np->stack == stack)
+			return np;
 
-	for (np = _head; np != NULL; np = np->next) {
-		if (np != client)
-			continue;
-
-		if (np->next != NULL)
-			np->next->prev = np->prev;
-		if (np->prev != NULL)
-			np->prev->next = np->next;
-		else if (np == _head)
-			_head = np->next;
-		free(client);
-		break;
-	}
+	return NULL;
 }
 
 void
@@ -160,36 +206,68 @@ top_client(struct client *client)
 }
 
 void
-focus_client(struct client *client)
+resize_client(struct client *client)
 {
-	Display *dpy = display();
-	struct stack *stack = current_stack();
+	Display *dpy;
+	struct stack *stack;
 	Window window;
 
-	if (_focus != NULL) {
-		window = _focus->window;
-		XSetWindowBorderWidth(dpy, window, BORDERWIDTH);
-		XSetWindowBorder(dpy, window, 5485488);
-		if (stack->client == _focus)
-			transition_client_state(_focus, IconicState);
-	}
+	dpy = display();
 
-	_focus = client;
-	if (_focus == NULL)
+	if (client == NULL)
 		return;
 
-	window = _focus->window;
-	transition_client_state(client, NormalState);
-	XMoveWindow(dpy, window, STACK_X(stack), STACK_Y(stack));
+	assert(client->stack != NULL);
+	stack = client->stack;
+
+	window = client->window;
+	XMoveWindow(dpy, window, STACK_X(stack), STACK_Y(stack) + BORDERWIDTH);
 	XResizeWindow(dpy, window, STACK_WIDTH(stack), STACK_HEIGHT(stack));
-	XSetWindowBorderWidth(dpy, window, BORDERWIDTH);
-	XSetWindowBorder(dpy, window, 434545456);
-	XRaiseWindow(dpy, window);
-	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
-	stack->client = client;
+}
+
+void
+focus_client(struct client *client, struct stack *stack)
+{
+	Display *dpy = display();
+	struct client *prev;
+	Window window;
+
+	if (client == NULL)
+		return;
+
+	if (stack == NULL)
+		stack = current_stack();
+
+	if (stack != current_stack()) {
+		focus_stack(stack);
+		return;
+	}
+
+	prev = _focus;
+	_focus = client;
+	window = client->window;
+
 	client->stack = stack;
 
+	transition_client_state(client, NormalState);
+	resize_client(client);
+
+	XRaiseWindow(dpy, window);
+	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
+
 	top_client(client);
+
+	if (prev != NULL && prev != client) {
+		window = prev->window;
+		/*
+		 * Don't iconify previously focused client if it is still
+		 * visible in another stack.
+		 */
+		if (find_top_client(prev->stack) != prev)
+			transition_client_state(prev, IconicState);
+	}
+
+	draw_stack(client->stack);
 }
 
 void
@@ -203,19 +281,20 @@ focus_client_cycle_here()
 		return;
 
 	stack = current_stack();
+	/*
+	 * Find next client that has the same stack.
+	 */
 	for (np = client->next; np != NULL; np = np->next) {
-		if (find_stack(np) != NULL)
-			continue;
-
-		focus_client(np);
-		return;
+		if (np->stack == stack) {
+			focus_client(np, NULL);
+			return;
+		}
 	}
 	for (np = _head; np != client && np != NULL; np = np->next) {
-		if (find_stack(np) != NULL)
-			continue;
-
-		focus_client(np);
-		return;
+		if (np->stack == stack) {
+			focus_client(np, NULL);
+			return;
+		}
 	}
 }
 
@@ -228,7 +307,7 @@ focus_client_forward()
 	if (client == NULL)
 		return;
 
-	focus_client(client->next != NULL ? client->next : _head);
+	focus_client(client->next != NULL ? client->next : _head, NULL);
 }
 
 void
@@ -249,14 +328,14 @@ focus_client_backward()
 		assert(np != NULL);
 	}
 
-	focus_client(np);
+	focus_client(np, NULL);
 }
 
 struct client *
 current_client()
 {
 	if (_head != NULL && _focus == NULL)
-		focus_client(_head);
+		focus_client(_head, NULL);
 
 	return _focus;
 }

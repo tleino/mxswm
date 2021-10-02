@@ -19,41 +19,54 @@
 #include "mxswm.h"
 #include <err.h>
 
+static void do_map(Window);
+
+static void
+do_map(Window window)
+{
+	XWindowAttributes wa;
+	Display *dpy = display();
+
+	XGetWindowAttributes(dpy, window, &wa);
+	if (wa.override_redirect == True)
+		return;
+	XMapWindow(dpy, window);
+	XSync(dpy, False);
+
+	if (add_client(window, NULL) == NULL)
+		warn("add_client");
+}
+
 int
 handle_event(XEvent *event)
 {
 	Window window;
-	struct client *client, *current;
+	struct client *client;
 
 	switch (event->type) {
 	case KeyRelease:
 		do_keyaction(&(event->xkey));
 		break;
+	case PropertyNotify:
+		window = event->xproperty.window;
+		client = have_client(window);
+		if (client != NULL) {
+			update_client_name(client);
+			draw_stack(client->stack);
+			draw_menu();
+		}
+		break;
 	case DestroyNotify:
 		window = event->xdestroywindow.window;
 		client = have_client(window);
-		current = current_client();
-		if (client != NULL) {
-			if (client == current)
-				remove_client(client);
-			else {
-				remove_client(client);
-				focus_client(current);
-			}
-		} else
+		if (client != NULL)
+			remove_client(client);
+		else
 			warnx("destroy of %lx observed without action",
 			    window);
 		break;
 	case MapRequest:
-		window = event->xmaprequest.window;
-		if (manageable(window)) {
-			client = add_client(window, NULL);
-			if (client == NULL)
-				warn("add_client");
-			else
-				focus_client(client);
-		} else
-			warnx("did not capture %lx", window);
+		do_map(event->xmaprequest.window);
 		break;
 	}
 	return 1;

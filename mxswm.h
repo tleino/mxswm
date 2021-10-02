@@ -28,6 +28,15 @@
 #define BORDERWIDTH 28
 #define FONTNAME \
 	"-xos4-terminus-medium-r-normal--28-280-72-72-c-140-iso10646-1"
+#define TITLEFONTNAME \
+	"-xos4-terminus-bold-r-normal--28-280-72-72-c-140-iso10646-1"
+
+/*
+ * TODO: These are purely random placeholder colors,
+ *       replace them with XAllocNamedColor or similar.
+ */
+#define TITLEBAR_FOCUS_COLOR 434545456
+#define TITLEBAR_NORMAL_COLOR 5485488
 
 struct client;
 
@@ -39,7 +48,7 @@ struct stack {
 	unsigned short num;
 	struct stack *next;
 	struct stack *prev;
-	struct client *client;
+	Window window;
 };
 
 struct client {
@@ -59,6 +68,7 @@ struct client {
 
 struct stack *add_stack(struct stack *);
 void remove_stack(struct stack *);
+void draw_stack(struct stack *);
 void add_stack_here(void);
 void remove_stack_here(void);
 void resize_stacks(void);
@@ -68,6 +78,7 @@ void focus_stack_backward(void);
 struct stack *current_stack(void);
 void resize_stack(struct stack *, unsigned short);
 struct stack *find_stack(struct client *);
+void resize_client(struct client *);
 
 #if TRACE
 void dump_stack(struct stack *);
@@ -79,7 +90,7 @@ struct client *find_client(Window);
 struct client *have_client(Window);
 void remove_client(struct client *);
 void top_client(struct client *);
-void focus_client(struct client *);
+void focus_client(struct client *, struct stack *);
 void focus_client_forward(void);
 void focus_client_backward(void);
 void focus_client_cycle_here(void);
@@ -87,6 +98,8 @@ struct client *current_client(void);
 struct client *next_client(struct client *);
 struct client *prev_client(struct client *);
 char *client_name(struct client *);
+struct client *find_top_client(struct stack *);
+void update_client_name(struct client *);
 
 unsigned short display_height(void);
 unsigned short display_width(void);
@@ -97,6 +110,7 @@ int manageable(Window);
 int handle_event(XEvent *);
 
 void open_menu(void);
+void draw_menu(void);
 void close_menu(void);
 void focus_menu_forward(void);
 void focus_menu_backward(void);

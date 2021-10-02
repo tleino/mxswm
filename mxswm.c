@@ -17,14 +17,17 @@
  */
 
 #include "mxswm.h"
+#include <X11/Xutil.h>
 #include <errno.h>
 #include <err.h>
 #include <stdlib.h>
+#include <locale.h>
 
 Display *_display;
 
 static void select_root_events(Display *);
 static int wm_rights_error(Display *, XErrorEvent *);
+static int read_state(Window);
 
 static void
 select_root_events(Display *display)
@@ -66,13 +69,36 @@ capture_existing_windows(Display *display)
 		if (manageable(children[i])) {
 			if (add_client(children[i], NULL) == NULL)
 				warn("add_client");
-			focus_client(find_client(children[i]));
 		} else
 			warnx("did not capture %lx", children[i]);
 	}
 
 	if (nchildren > 0)
 		XFree(children);
+}
+
+static int
+read_state(Window window)
+{
+	Display *dpy = display();
+	Atom actual_type;
+	int actual_format;
+	unsigned long nitems, bytes_after;
+	unsigned char *prop_return = NULL;
+	unsigned long data[2];
+	Atom wmstate;
+
+	wmstate = XInternAtom(dpy, "WM_STATE", False);
+	if (XGetWindowProperty(dpy, window, wmstate, 0L, 2L, False, wmstate,
+	    &actual_type, &actual_format, &nitems,
+	    &bytes_after, &prop_return) != Success ||
+            !prop_return || nitems > 2)
+		return NormalState;
+
+	data[0] = prop_return[0];
+	XFree(prop_return);
+
+	return data[0];
 }
 
 int
@@ -83,12 +109,14 @@ manageable(Window w)
 	Display *d = display();
 
 	XGetWindowAttributes(d, w, &wa);
-#if 0
 	mapped = (wa.map_state != IsUnmapped);
-#else
-	mapped = 1;
-#endif
 	redirectable = (wa.override_redirect != True);
+
+	/*
+	 * We wish to manage iconified windows that are unmapped.
+	 */
+	if (!mapped)
+		mapped = (read_state(w) == IconicState);
 
 	return (mapped && redirectable);
 }
@@ -143,10 +171,13 @@ main(int argc, char *argv[])
 	XEvent event;
 	Display *dpy;
 
+	setlocale(LC_ALL, "");
+
 	dpy = display();
+	select_root_events(dpy);
+
 	capture_existing_windows(dpy);
 
-	select_root_events(dpy);
 	dump_clients();
 
 	dump_stacks();
