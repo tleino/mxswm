@@ -25,11 +25,23 @@
 #define ARRLEN(_x) sizeof((_x)) / sizeof((_x)[0])
 #endif
 
+/*
+ * These are sane defaults for a 2560x1440 screen.
+ * Modify freely locally.
+ */
 #define BORDERWIDTH 28
 #define FONTNAME \
 	"-xos4-terminus-medium-r-normal--28-280-72-72-c-140-iso10646-1"
 #define TITLEFONTNAME \
 	"-xos4-terminus-bold-r-normal--28-280-72-72-c-140-iso10646-1"
+
+/*
+ * For 80-column terminals.
+ */
+#if WANT_MAXWIDTH
+#define FONTWIDTH 14
+#define MAXWIDTH (FONTWIDTH * 80)
+#endif
 
 /*
  * TODO: These are purely random placeholder colors,

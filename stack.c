@@ -127,7 +127,14 @@ resize_stacks()
 	width = display_width() - BORDERWIDTH;
 	width /= n;
 	width -= BORDERWIDTH;
+
 	x = 0;
+#ifdef MAXWIDTH
+	if (width > MAXWIDTH) {
+		x = (width - MAXWIDTH) / 2 * n;
+		width = MAXWIDTH;
+	}
+#endif
 	for (np = _head; np != NULL; np = np->next) {
 		x += BORDERWIDTH;
 		np->x = x;
