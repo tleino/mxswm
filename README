@@ -33,6 +33,13 @@ Feature TODO
 
  - Xinerama (multi-screen) support (can be copied from cocowm).
 
+ - Runtime configuration of max stack width (useful for setting sane
+   maximums, or for setting the width for 80 column terminals).
+
+ - Temporarily override max stack width (fullscreen mode).
+
+ - Temporarily hide other stacks.
+
 Default key bindings
 ====================
 
