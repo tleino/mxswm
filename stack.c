@@ -165,6 +165,7 @@ struct stack *
 add_stack(struct stack *after)
 {
 	struct stack *stack;
+	struct client *client;
 
 	stack = malloc(sizeof(struct stack));
 	if (stack == NULL)
@@ -204,6 +205,10 @@ add_stack(struct stack *after)
 
 	dump_stacks();
 
+	client = NULL;
+	while ((client = next_client(client)) != NULL)
+		resize_client(client);
+
 	return stack;
 }
 
@@ -231,11 +236,15 @@ remove_stack(struct stack *stack)
 	free(stack);
 
 	dump_stacks();
+	resize_stacks();
 
 	client = NULL;
-	while ((client = next_client(client)) != NULL)
-		if (CLIENT_STACK(client) == stack)
+	while ((client = next_client(client)) != NULL) {
+		if (CLIENT_STACK(client) == stack) {
 			CLIENT_STACK(client) = _focus;
+		}
+		resize_client(client);
+	}
 
 	renumber_stacks();
 	resize_stacks();
