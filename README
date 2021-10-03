@@ -7,6 +7,9 @@ allows quick changing between the windows using keyboard.
 This is useful for people who hate micromanaging the position and size
 of windows using mouse.
 
+If it is necessary to stack some windows vertically, you can use xvbox.
+See https://github.com/tleino/xvbox .
+
 If it is necessary to manually manage position and size of some windows,
 run a separate window manager better suited for the job in Xephyr.
 
