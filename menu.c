@@ -19,10 +19,12 @@
 #include "mxswm.h"
 #include <stdio.h>
 #include <string.h>
+#include <err.h>
 
 static Window _menu;
 static GC _gc, _focus_gc;
 static struct client *current;
+static XFontStruct *_fs;
 
 void
 create_menu()
@@ -92,17 +94,30 @@ draw_menu()
 	struct stack *stack = current_stack();
 	char buf[256];
 	char c;
+	int font_x, font_y, font_width, font_height;
+	int row;
 
 	if (_menu == 0)
 		return;
 
+	if (_fs == NULL) {
+		_fs = XLoadQueryFont(display(), FONTNAME);
+		if (_fs == NULL) {
+			warnx("couldn't load font: %s", FONTNAME);
+			_fs = XLoadQueryFont(display(), FALLBACKFONT);
+			if (_fs == NULL)
+				errx(1, "couldn't load font: %s",
+				    FALLBACKFONT);
+		}
+	}
+
 	if (_gc == 0) {
 		v.foreground = WhitePixel(display(), DefaultScreen(display()));
-		v.font = XLoadFont(display(), FONTNAME);
+		v.font = _fs->fid;
 		_gc = XCreateGC(display(), DefaultRootWindow(display()),
 		    GCForeground | GCFont, &v);
 		v.foreground = 434838438;
-		v.font = XLoadFont(display(), FONTNAME);
+		v.font = _fs->fid;
 		_focus_gc = XCreateGC(display(), DefaultRootWindow(display()),
 		    GCForeground | GCFont, &v);
 	}
@@ -115,6 +130,7 @@ draw_menu()
 	client = NULL;
 	x = 40;
 	y = 40;
+	row = 0;
 	while ((client = next_client(client)) != NULL) {
 		name = client_name(client);
 
@@ -136,13 +152,23 @@ draw_menu()
 		else
 			snprintf(buf, sizeof(buf), "%c %s [??]", c, name);
 
+		font_x = _fs->min_bounds.lbearing;
+		font_y = _fs->max_bounds.ascent;
+		font_width = _fs->max_bounds.rbearing -
+		    _fs->min_bounds.lbearing;
+		font_height = _fs->max_bounds.ascent +
+		    _fs->max_bounds.descent;
+
+		x = font_x;
+		y = (row * font_height) + font_y;
+
 		if (client == current)
 			XDrawImageString(display(), _menu, _focus_gc, x, y,
 			    buf, strlen(buf));
 		else
 			XDrawImageString(display(), _menu, _gc, x, y, buf,
 			    strlen(buf));
-		y += 30;
+		row++;
 	}
 }
 

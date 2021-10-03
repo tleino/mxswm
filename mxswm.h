@@ -34,6 +34,8 @@
 	"-xos4-terminus-medium-r-normal--28-280-72-72-c-140-iso10646-1"
 #define TITLEFONTNAME \
 	"-xos4-terminus-bold-r-normal--28-280-72-72-c-140-iso10646-1"
+#define FALLBACKFONT \
+	"-misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1"
 
 /*
  * For 80-column terminals.

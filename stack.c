@@ -25,6 +25,7 @@
 
 static struct stack *_head;
 static struct stack *_focus;
+static XFontStruct *_fs;
 
 static GC _gc;
 
@@ -50,9 +51,20 @@ create_stack_titlebar(struct stack *stack)
 
 	dpy = display();
 
+	if (_fs == NULL) {
+		_fs = XLoadQueryFont(display(), TITLEFONTNAME);
+		if (_fs == NULL) {
+			warnx("couldn't load font: %s", TITLEFONTNAME);
+			_fs = XLoadQueryFont(display(), FALLBACKFONT);
+			if (_fs == NULL)
+				errx(1, "couldn't load font: %s",
+				    FALLBACKFONT);
+		}
+	}
+
 	if (_gc == 0) {
 		gcv.foreground = BlackPixel(dpy, DefaultScreen(dpy));
-		gcv.font = XLoadFont(dpy, TITLEFONTNAME);
+		gcv.font = _fs->fid;
 		_gc = XCreateGC(dpy, DefaultRootWindow(dpy),
 		    GCForeground | GCFont, &gcv);
 	}
@@ -77,15 +89,27 @@ draw_stack(struct stack *stack)
 {
 	Display *dpy;
 	struct client *client;
+	int x, y;
+	int font_width, font_height, font_x, font_y;
 
 	dpy = display();
 	client = find_top_client(stack);
 
 	XClearWindow(dpy, stack->window);
 	XRaiseWindow(dpy, stack->window);
-	if (client != NULL && client->name != NULL)
-		XDrawString(display(), stack->window, _gc, 0, 22,
+	if (client != NULL && client->name != NULL) {
+		font_x = _fs->min_bounds.lbearing;
+		font_y = _fs->max_bounds.ascent;
+		font_width = _fs->max_bounds.rbearing -
+		    _fs->min_bounds.lbearing;
+		font_height = _fs->max_bounds.ascent +
+		    _fs->max_bounds.descent;
+
+		x = font_x;
+		y = (0 * font_height) + font_y;
+		XDrawString(display(), stack->window, _gc, x, y,
 		    client->name, strlen(client->name));
+	}
 }
 
 static void
