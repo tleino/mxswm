@@ -27,8 +27,6 @@
 static struct client *_head;
 static struct client *_focus;
 
-static void transition_client_state(struct client *, unsigned long);
-
 void
 update_client_name(struct client *client)
 {
@@ -250,21 +248,10 @@ focus_client(struct client *client, struct stack *stack)
 	_focus = client;
 	window = client->window;
 
-	transition_client_state(client, NormalState);
 	resize_client(client);
 
 	XRaiseWindow(dpy, window);
 	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
-
-	if (prev != NULL && prev != client) {
-		window = prev->window;
-		/*
-		 * Don't iconify previously focused client if it is still
-		 * visible in another stack.
-		 */
-		if (find_top_client(prev->stack) != prev)
-			transition_client_state(prev, IconicState);
-	}
 
 	draw_stack(client->stack);
 }
@@ -337,27 +324,6 @@ current_client()
 		focus_client(_head, NULL);
 
 	return _focus;
-}
-
-static void
-transition_client_state(struct client *client, unsigned long state)
-{
-	unsigned long data[2];
-	Atom wmstate;
-	Display *dpy = display();
-
-	data[0] = state;
-	data[1] = None;
-
-	wmstate = XInternAtom(dpy, "WM_STATE", False);
-
-	XChangeProperty (dpy, client->window, wmstate, wmstate, 32,
-	    PropModeReplace, (unsigned char *) data, 2);
-	if (state == IconicState)
-		XUnmapWindow(dpy, client->window);
-	else if (state == NormalState)
-		XMapWindow(dpy, client->window);
-	XSync(dpy, False);
 }
 
 #if (TRACE || TEST)

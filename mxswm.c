@@ -27,7 +27,6 @@ Display *_display;
 
 static void select_root_events(Display *);
 static int wm_rights_error(Display *, XErrorEvent *);
-static int read_state(Window);
 
 static void
 select_root_events(Display *display)
@@ -77,30 +76,6 @@ capture_existing_windows(Display *display)
 		XFree(children);
 }
 
-static int
-read_state(Window window)
-{
-	Display *dpy = display();
-	Atom actual_type;
-	int actual_format;
-	unsigned long nitems, bytes_after;
-	unsigned char *prop_return = NULL;
-	unsigned long data[2];
-	Atom wmstate;
-
-	wmstate = XInternAtom(dpy, "WM_STATE", False);
-	if (XGetWindowProperty(dpy, window, wmstate, 0L, 2L, False, wmstate,
-	    &actual_type, &actual_format, &nitems,
-	    &bytes_after, &prop_return) != Success ||
-            !prop_return || nitems > 2)
-		return NormalState;
-
-	data[0] = prop_return[0];
-	XFree(prop_return);
-
-	return data[0];
-}
-
 int
 manageable(Window w)
 {
@@ -111,12 +86,6 @@ manageable(Window w)
 	XGetWindowAttributes(d, w, &wa);
 	mapped = (wa.map_state != IsUnmapped);
 	redirectable = (wa.override_redirect != True);
-
-	/*
-	 * We wish to manage iconified windows that are unmapped.
-	 */
-	if (!mapped)
-		mapped = (read_state(w) == IconicState);
 
 	return (mapped && redirectable);
 }
