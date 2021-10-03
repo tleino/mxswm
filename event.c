@@ -56,13 +56,18 @@ handle_event(XEvent *event)
 			draw_menu();
 		}
 		break;
+	case UnmapNotify:
 	case DestroyNotify:
-		window = event->xdestroywindow.window;
+		if (event->type == UnmapNotify)
+			window = event->xmap.window;
+		else
+			window = event->xdestroywindow.window;
 		client = have_client(window);
 		if (client != NULL)
 			remove_client(client);
 		else
-			warnx("destroy of %lx observed without action",
+			warnx("%s of %lx observed without action",
+			    event->type == UnmapNotify ? "unmap" : "destroy",
 			    window);
 		break;
 	case MapRequest:
