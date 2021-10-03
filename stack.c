@@ -218,6 +218,8 @@ add_stack(struct stack *after)
 	while ((client = next_client(client)) != NULL)
 		resize_client(client);
 
+	focus_stack(stack);
+
 	return stack;
 }
 
