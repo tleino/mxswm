@@ -30,6 +30,15 @@ static GC _gc;
 
 static void create_stack_titlebar(struct stack *);
 
+static int maxwidth_override;
+
+void
+toggle_stacks_maxwidth_override()
+{
+	maxwidth_override ^= 1;
+	resize_stacks();
+}
+
 static void
 create_stack_titlebar(struct stack *stack)
 {
@@ -130,7 +139,7 @@ resize_stacks()
 
 	x = 0;
 #ifdef MAXWIDTH
-	if (width > MAXWIDTH) {
+	if (!maxwidth_override && width > MAXWIDTH) {
 		x = (width - MAXWIDTH) / 2 * n;
 		width = MAXWIDTH;
 	}

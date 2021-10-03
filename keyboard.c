@@ -28,6 +28,10 @@ struct binding {
 	void (*kbfun)(void);
 };
 
+static void _unbind_keys(Display *, Window, const struct binding *, size_t);
+static void _bind_keys(Display *, Window, const struct binding *, size_t);
+void _do_keyaction(XKeyEvent *, const struct binding *, size_t);
+
 /*
  * Assuming normal PC keyboard where Mod4Mask corresponds to Win key,
  * and Mod1Mask to Alt key.
@@ -41,6 +45,7 @@ static const struct binding keybinding[] = {
 	{ XK_Menu, 0, focus_client_cycle_here },
 	{ XK_F1, 0, remove_stack_here },
 	{ XK_F2, 0, add_stack_here },
+	{ XK_F3, 0, toggle_stacks_maxwidth_override },
 };
 
 static const struct binding menubinding[] = {
@@ -55,10 +60,6 @@ static const struct binding menubinding[] = {
 	{ XK_Escape, 0, close_menu },
 	{ XK_Menu, ControlMask, select_menu_item },
 };
-
-static void _unbind_keys(Display *, Window, const struct binding *, size_t sz);
-static void _bind_keys(Display *, Window, const struct binding *, size_t sz);
-void _do_keyaction(XKeyEvent *xkey, const struct binding *bindings, size_t sz);
 
 static int menu;
 

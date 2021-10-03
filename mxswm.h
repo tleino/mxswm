@@ -61,6 +61,7 @@ struct stack {
 	struct stack *next;
 	struct stack *prev;
 	Window window;
+	int maxwidth_override;
 };
 
 struct client {
@@ -91,6 +92,7 @@ struct stack *current_stack(void);
 void resize_stack(struct stack *, unsigned short);
 struct stack *find_stack(struct client *);
 void resize_client(struct client *);
+void toggle_stacks_maxwidth_override(void);
 
 #if TRACE
 void dump_stack(struct stack *);
