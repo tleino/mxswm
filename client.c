@@ -238,6 +238,9 @@ focus_client(struct client *client, struct stack *stack)
 	if (stack == NULL)
 		stack = current_stack();
 
+	client->stack = stack;
+	top_client(client);
+
 	if (stack != current_stack()) {
 		focus_stack(stack);
 		return;
@@ -247,15 +250,11 @@ focus_client(struct client *client, struct stack *stack)
 	_focus = client;
 	window = client->window;
 
-	client->stack = stack;
-
 	transition_client_state(client, NormalState);
 	resize_client(client);
 
 	XRaiseWindow(dpy, window);
 	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
-
-	top_client(client);
 
 	if (prev != NULL && prev != client) {
 		window = prev->window;
