@@ -55,6 +55,16 @@ select_menu_item()
 }
 
 void
+select_move_menu_item()
+{
+	close_menu();
+	if (current != NULL) {
+		focus_client(current, current_stack());
+		current = NULL;
+	}
+}
+
+void
 select_menu_item_right()
 {
 	focus_stack_forward();
