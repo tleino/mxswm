@@ -30,6 +30,7 @@ static XFontStruct *_fs;
 static GC _gc;
 
 static void create_stack_titlebar(struct stack *);
+static int stack_width(int, int, int);
 
 static int maxwidth_override;
 
@@ -38,6 +39,18 @@ toggle_stacks_maxwidth_override()
 {
 	maxwidth_override ^= 1;
 	resize_stacks();
+}
+
+struct stack *
+find_stack(int num)
+{
+	struct stack *np;
+
+	for (np = _head; np != NULL; np = np->next)
+		if (np->num == num)
+			return np;
+
+	return NULL;
 }
 
 static void
@@ -145,34 +158,81 @@ resize_stack(struct stack *stack, unsigned short width)
 	draw_stack(stack);
 }
 
+static int
+stack_width(int avg, int prefer, int surplus)
+{
+	int width;
+
+	width = avg;
+
+	if (prefer > 0)
+		width = MIN(width, prefer + BORDERWIDTH);
+	else if (surplus > 0)
+		width += surplus;
+
+#ifdef MAXWIDTH
+	if (!maxwidth_override)
+		width = MIN(width, MAXWIDTH + BORDERWIDTH);
+#endif
+
+	return MAX(width, BORDERWIDTH * 2);
+}
+
 void
 resize_stacks()
 {
 	struct stack *np;
-	size_t n, x;
-	unsigned short width;
+	int avg, width, surplus, total, total_surplus;
+	int x;
+	size_t n, n_want_surplus;
 
 	n = 0;
 	for (np = _head; np != NULL; np = np->next)
 		n++;
-	assert(n > 0);
 
-	width = display_width() - BORDERWIDTH;
-	width /= n;
-	width -= BORDERWIDTH;
+	/*
+	 * Client width here is calculated to be its width + BORDERWIDTH,
+	 * keeping things simple, but we need to account for the initial
+	 * BORDERWIDTH.
+	 */
+	avg = (display_width() - BORDERWIDTH);
+	avg /= n;
 
-	x = 0;
-#ifdef MAXWIDTH
-	if (!maxwidth_override && width > MAXWIDTH) {
-		x = (width - MAXWIDTH) / 2 * n;
-		width = MAXWIDTH;
-	}
-#endif
+	/*
+	 * Calculate surplus caused by prefer_width settings to be
+	 * distributed to auto-resizing stacks.
+	 */
+	surplus = 0;
+	n_want_surplus = 0;
 	for (np = _head; np != NULL; np = np->next) {
-		x += BORDERWIDTH;
+		if (np->prefer_width > 0) {
+			width = stack_width(avg, np->prefer_width, 0);
+			surplus += (stack_width(avg, 0, 0) - width);
+		} else
+			n_want_surplus++;
+	}
+	if (n_want_surplus > 0)
+		surplus /= n_want_surplus;
+
+	/*
+	 * Calculate total for finding out how to center the stacks.
+	 */
+	total = 0;
+	for (np = _head; np != NULL; np = np->next) {
+		width = stack_width(avg, np->prefer_width, surplus);
+		total += width;
+	}
+	total_surplus = display_width() - BORDERWIDTH - total;
+
+	/*
+	 * Resize and move.
+	 */
+	x = BORDERWIDTH + (total_surplus/2);
+	for (np = _head; np != NULL; np = np->next) {
 		np->x = x;
+		width = stack_width(avg, np->prefer_width, surplus);
+		resize_stack(np, width - BORDERWIDTH);
 		x += width;
-		resize_stack(np, width);
 	}
 }
 
@@ -208,6 +268,7 @@ add_stack(struct stack *after)
 	stack->width = 0;
 	stack->x = 0;
 	stack->y = 0;
+	stack->prefer_width = 0;
 
 	stack->prev = after;
 	if (after != NULL) {

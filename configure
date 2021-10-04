@@ -25,6 +25,20 @@ prefix=/usr/local
 if [ "$#" -eq 1 ] ; then prefix=$1 ; fi
 echo "prefix=${prefix}"
 
+SYSTEM_CFLAGS=
+case $(uname) in
+	Linux )
+		SYSTEM_CFLAGS=-D_POSIX_C_SOURCE=200809L
+		SYSTEM_LDFLAGS=
+	;;
+	OpenBSD )
+		SYSTEM_CFLAGS=
+		SYSTEM_LDFLAGS=
+	;;
+esac
+echo "system: $(uname)"
+echo "SYSTEM_CFLAGS=" ${SYSTEM_CFLAGS}
+
 PKGS="x11 xinerama"
 for a in ${PKGS} ; do
 	check_pkg $a
@@ -42,4 +56,17 @@ sed \
 	-e "s|@prefix@|${prefix}|g" \
 	-e "s|@PKGS_CFLAGS@|${PKGS_CFLAGS}|g" \
 	-e "s|@PKGS_LDFLAGS@|${PKGS_LDFLAGS}|g" \
+	-e "s|@SYSTEM_CFLAGS@|${SYSTEM_CFLAGS}|g" \
+	-e "s|@SYSTEM_LDFLAGS@|${SYSTEM_LDFLAGS}|g" \
 	Makefile.in >>Makefile
+echo "create: mxswmctl/Makefile"
+echo '# Automatically generated from Makefile.in by configure' \
+	>mxswmctl/Makefile
+echo >>mxswmctl/Makefile
+sed \
+	-e "s|@prefix@|${prefix}|g" \
+	-e "s|@PKGS_CFLAGS@|${PKGS_CFLAGS}|g" \
+	-e "s|@PKGS_LDFLAGS@|${PKGS_LDFLAGS}|g" \
+	-e "s|@SYSTEM_CFLAGS@|${SYSTEM_CFLAGS}|g" \
+	-e "s|@SYSTEM_LDFLAGS@|${SYSTEM_LDFLAGS}|g" \
+	mxswmctl/Makefile.in >>mxswmctl/Makefile

@@ -21,7 +21,9 @@ for most purposes when working with programs that were designed for
 the full screen view.
 
 At the moment mostly works, but is not flawless. Also, requires manual
-customization from mxswm.h for e.g. setting the fonts and borders.
+customization from mxswm.h for e.g. setting the fonts and borders. There
+is some initial support for runtime configuration through a Unix domain
+socket using 'mxswmctl' command.
 
 Feature TODO
 ============
@@ -76,12 +78,24 @@ Right		Move selected item to a stack on the right side,
 Build
 =====
 
-./configure ~
-make
-make install
+$ ./configure ~
+$ make
+$ make install
+
+Runtime configuration
+=====================
+
+Set first stack's width to 200px:
+
+$ mxswmctl stack 1 width 200
 
 Dependencies
 ============
 
 - Practically none on a standard Unix/Linux system that uses
   X11 Window System.
+
+Files
+=====
+
+~/.mxswm_socket		For runtime configuration using mxswmctl

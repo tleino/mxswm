@@ -139,6 +139,7 @@ main(int argc, char *argv[])
 	int running;
 	XEvent event;
 	Display *dpy;
+	int ctlfd;
 
 	setlocale(LC_ALL, "");
 
@@ -153,11 +154,20 @@ main(int argc, char *argv[])
 
 	bind_keys();
 
-	running = 1;
-	while (running) {
-		XNextEvent(dpy, &event);
-		if (handle_event(&event) <= 0)
-			break;
+#if WANT_CTLSOCKET
+	ctlfd = listen_ctlsocket();
+#else
+	ctlfd = -1;
+#endif
+	if (ctlfd != -1) {
+		run_ctlsocket_event_loop(ctlfd);
+	} else {
+		running = 1;
+		while (running) {
+			XNextEvent(dpy, &event);
+			if (handle_event(&event) <= 0)
+				break;
+		}
 	}
 
 	XSync(dpy, False);

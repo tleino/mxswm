@@ -25,6 +25,14 @@
 #define ARRLEN(_x) sizeof((_x)) / sizeof((_x)[0])
 #endif
 
+#ifndef MIN
+#define MIN(_x, _y) ((_x) < (_y) ? (_x) : (_y))
+#endif
+
+#ifndef MAX
+#define MAX(_x, _y) ((_x) > (_y) ? (_x) : (_y))
+#endif
+
 /*
  * These are sane defaults for a 2560x1440 screen.
  * Modify freely locally.
@@ -64,6 +72,7 @@ struct stack {
 	struct stack *prev;
 	Window window;
 	int maxwidth_override;
+	int prefer_width;
 };
 
 struct client {
@@ -92,7 +101,7 @@ void focus_stack_forward(void);
 void focus_stack_backward(void);
 struct stack *current_stack(void);
 void resize_stack(struct stack *, unsigned short);
-struct stack *find_stack(struct client *);
+struct stack *find_stack(int);
 void resize_client(struct client *);
 void toggle_stacks_maxwidth_override(void);
 
@@ -140,6 +149,12 @@ void hide_menu(void);
 void do_keyaction(XKeyEvent *);
 void unbind_keys();
 void bind_keys();
+
+#if WANT_CTLSOCKET
+int listen_ctlsocket(void);
+void run_ctlsocket_event_loop(int);
+void run_ctl_line(const char *);
+#endif
 
 #if TRACE
 void dump_client(struct client *);

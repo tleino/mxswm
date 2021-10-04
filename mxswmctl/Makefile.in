@@ -1,7 +1,6 @@
 SHELL = /bin/sh
-CFLAGS = -g -Wall -std=c99 @PKGS_CFLAGS@ -DTRACE -DWANT_MAXWIDTH \
-	-DWANT_CTLSOCKET @SYSTEM_CFLAGS@
-LDFLAGS = @PKGS_LDFLAGS@ @SYSTEM_LDFLAGS@
+CFLAGS = -g -Wall -std=c99 @SYSTEM_CFLAGS@
+LDFLAGS = @SYSTEM_LDFLAGS@
 
 prefix = @prefix@
 exec_prefix = $(prefix)
@@ -13,35 +12,27 @@ mandir = $(datarootdir)/man
 INSTALL ?= install
 INSTALLFLAGS ?=
 
-SRCS=mxswm.c stack.c client.c event.c menu.c keyboard.c ctlsocket.c ctl.c
-PROG=mxswm
+SRCS=mxswmctl.c
+PROG=mxswmctl
 
 OBJS=$(SRCS:.c=.o)
 
-all: $(PROG) mxswmctl
-
-mxswmctl:
-	make -C mxswmctl
+all: $(PROG)
 
 $(PROG): $(OBJS)
-	$(CC) -o$@ $(OBJS) $(LDFLAGS)
+	$(CC) -o$@ $(OBJS)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f $(OBJS) $(PROG)
-	make -C mxswmctl clean
 
 install: $(PROG)
 	if [ ! -x $(DESTDIR)$(bindir) ] ; then \
 		mkdir -p $(DESTDIR)$(bindir) ; fi
 	$(INSTALL) $(INSTALLFLAGS) $(PROG) $(DESTDIR)$(bindir)
-	make -C mxswmctl install
 
 uninstall:
 	if [ -e $(DESTDIR)$(bindir)/$(PROG) ] ; then \
 		rm $(DESTDIR)$(bindir)/$(PROG) ; fi
-	make -C mxswmctl uninstall
-
-.PHONY: mxswmctl
