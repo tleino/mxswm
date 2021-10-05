@@ -66,9 +66,11 @@ handle_event(XEvent *event)
 		if (client != NULL)
 			remove_client(client);
 		else
+#ifdef TRACE
 			warnx("%s of %lx observed without action",
 			    event->type == UnmapNotify ? "unmap" : "destroy",
 			    window);
+#endif
 		break;
 	case MapRequest:
 		do_map(event->xmaprequest.window);

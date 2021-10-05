@@ -108,6 +108,9 @@ void toggle_stacks_maxwidth_override(void);
 #if TRACE
 void dump_stack(struct stack *);
 void dump_stacks(void);
+#else
+#define dump_stacks(x) do { } while(0)
+#define dump_stack(x) do { } while(0)
 #endif
 
 struct client *add_client(Window, struct client *);
@@ -159,6 +162,9 @@ void run_ctl_line(const char *);
 #if TRACE
 void dump_client(struct client *);
 void dump_clients(void);
+#else
+#define dump_clients(x) do { } while(0)
+#define dump_client(x) do { } while(0)
 #endif
 
 #endif
