@@ -68,8 +68,8 @@ Esc		Close menu
 Up		Focus previous item in menu list
 Down		Focus next item in menu list
 Menu		Focus next item in menu list
-Enter		Select menu item and close menu
-Shift+Enter	Move menu item to current stack and close menu
+Enter		Move menu item to current stack and close menu
+Shift+Enter	Select menu item in its stack and close menu
 Left		Move selected item to a stack on the left side,
 		focus the stack and close the menu
 Right		Move selected item to a stack on the right side,
