@@ -287,13 +287,15 @@ focus_client_cycle_here()
 void
 focus_client_forward()
 {
-	struct client *client;
+	struct client *prev, *client;
 
-	client = current_client();
-	if (client == NULL)
+	prev = current_client();
+	if (prev == NULL)
 		return;
 
-	focus_client(client->next != NULL ? client->next : _head, NULL);
+	client = prev->next != NULL ? prev->next : _head;
+
+	focus_client(client, client->stack);
 }
 
 void

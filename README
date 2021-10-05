@@ -58,7 +58,8 @@ Win+Right	Select stack on the right
 Clients
 -------
 
-Menu		Cycle once to next client that is not in another stack
+Menu		Cycle to next client in any stack
+Win+Down	Cycle to next client in this stack
 Ctrl+Menu	Open clients menu
 
 Client menu
