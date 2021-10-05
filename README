@@ -52,22 +52,22 @@ Stacks
 F1		Remove window stack
 F2		Add window stack
 F3		Toggle overriding maxwidth setting
-LeftWindows	Select stack on the left
-RightWindows	Select stack on the right
+Win+Left	Select stack on the left
+Win+Right	Select stack on the right
 
 Clients
 -------
 
 Menu		Cycle once to next client that is not in another stack
+Ctrl+Menu	Open clients menu
 
 Client menu
 -----------
 
-Ctrl+Menu	Open menu / select menu item and close menu
+Ctrl+Menu	Close menu
 Esc		Close menu
 Up		Focus previous item in menu list
 Down		Focus next item in menu list
-Menu		Focus next item in menu list
 Enter		Move menu item to current stack and close menu
 Shift+Enter	Select menu item in its stack and close menu
 Left		Move selected item to a stack on the left side,

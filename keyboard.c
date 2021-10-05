@@ -37,10 +37,8 @@ void _do_keyaction(XKeyEvent *, const struct binding *, size_t);
  * and Mod1Mask to Alt key.
  */
 static const struct binding keybinding[] = {
-	{ XK_Super_L, DONT_CHECK_MASK,
-	    focus_stack_backward },
-	{ XK_Super_R, DONT_CHECK_MASK,
-	    focus_stack_forward },
+	{ XK_Left, Mod4Mask, focus_stack_backward },
+	{ XK_Right, Mod4Mask, focus_stack_forward },
 	{ XK_Menu, ControlMask, open_menu },
 	{ XK_Menu, 0, focus_client_cycle_here },
 	{ XK_F1, 0, remove_stack_here },
@@ -49,17 +47,14 @@ static const struct binding keybinding[] = {
 };
 
 static const struct binding menubinding[] = {
-	{ XK_Menu, 0, focus_menu_forward },
 	{ XK_Up, 0, focus_menu_backward },
 	{ XK_Down, 0, focus_menu_forward },
 	{ XK_Right, 0, select_menu_item_right },
 	{ XK_Left, 0, select_menu_item_left },
 	{ XK_Return, 0, select_move_menu_item },
 	{ XK_Return, ShiftMask, select_menu_item },
-	{ XK_Super_L, DONT_CHECK_MASK, close_menu },
-	{ XK_Super_R, DONT_CHECK_MASK, close_menu },
+	{ XK_Menu, ControlMask, close_menu },
 	{ XK_Escape, 0, close_menu },
-	{ XK_Menu, ControlMask, select_menu_item },
 };
 
 static int menu;
