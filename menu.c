@@ -22,9 +22,26 @@
 #include <err.h>
 
 static Window _menu;
-static GC _gc, _focus_gc;
+static GC _gc, _focus_gc, _highlight_gc;
 static struct client *current;
 static XFontStruct *_fs;
+static int _menu_visible;
+static int _highlight;
+
+static void move_menu_item(int);
+
+void
+highlight_menu(int i)
+{
+	_highlight = i;
+	draw_menu();
+}
+
+int
+is_menu_visible()
+{
+	return _menu_visible;
+}
 
 void
 create_menu()
@@ -38,7 +55,7 @@ create_menu()
 	x = w / 2;
 	y = h / 2;
 	v = CWBackPixel;
-	a.background_pixel = 0;
+	a.background_pixel = TITLEBAR_FOCUS_COLOR;
 	_menu = XCreateWindow(display(),
 	    DefaultRootWindow(display()),
 	    x, y, w, h, 0, CopyFromParent,
@@ -49,21 +66,55 @@ create_menu()
 void
 select_menu_item()
 {
-	close_menu();
 	if (current != NULL) {
 		focus_client(current, current->stack);
 		current = NULL;
 	}
+	close_menu();
+}
+
+static void
+move_menu_item(int dir)
+{
+	struct client *client;
+
+	client = current;
+
+	if (dir == -1)
+		focus_stack_backward();
+	else
+		focus_stack_forward();
+
+	if (client != NULL) {
+		client->stack = current_stack();
+		focus_client(client, client->stack);
+		client = NULL;
+	}
+
+	draw_menu();
+}
+
+void
+move_menu_item_right()
+{
+	move_menu_item(1);
+}
+
+void
+move_menu_item_left()
+{
+	move_menu_item(-1);
 }
 
 void
 select_move_menu_item()
 {
-	close_menu();
+	highlight_stacks(0);
 	if (current != NULL) {
 		focus_client(current, current_stack());
 		current = NULL;
 	}
+	close_menu();
 }
 
 void
@@ -93,9 +144,9 @@ draw_menu()
 	char *name;
 	struct stack *stack = current_stack();
 	char buf[256];
-	char c;
 	int font_x, font_y, font_width, font_height;
 	int row;
+	int nclients;
 
 	if (_menu == 0)
 		return;
@@ -116,14 +167,35 @@ draw_menu()
 		v.font = _fs->fid;
 		_gc = XCreateGC(display(), DefaultRootWindow(display()),
 		    GCForeground | GCFont, &v);
+
 		v.foreground = 434838438;
 		v.font = _fs->fid;
 		_focus_gc = XCreateGC(display(), DefaultRootWindow(display()),
 		    GCForeground | GCFont, &v);
+
+		v.foreground = 6748778438;
+		v.font = _fs->fid;
+		_highlight_gc = XCreateGC(display(),
+		    DefaultRootWindow(display()), GCForeground | GCFont, &v);
 	}
 
+	client = NULL;
+	nclients = 0;
+	while ((client = next_client(client)) != NULL) {
+		nclients++;
+	}
+
+	font_x = _fs->min_bounds.lbearing;
+	font_y = _fs->max_bounds.ascent;
+	font_width = _fs->max_bounds.rbearing -
+	    _fs->min_bounds.lbearing;
+	font_height = _fs->max_bounds.ascent +
+	    _fs->max_bounds.descent;
+
 	XMoveWindow(display(), _menu, STACK_X(stack), BORDERWIDTH);
-	XResizeWindow(display(), _menu, STACK_WIDTH(stack), STACK_HEIGHT(stack));
+	XResizeWindow(display(), _menu, STACK_WIDTH(stack),
+	    nclients * font_height);
+
 	XRaiseWindow(display(), _menu);
 	XSync(display(), False);
 
@@ -132,8 +204,14 @@ draw_menu()
 	y = 40;
 	row = 0;
 	while ((client = next_client(client)) != NULL) {
+#if 0
+		if (client->stack != current_stack())
+			continue;
+#endif
+
 		name = client_name(client);
 
+#if 0
 		if (client == current_client())
 			c = '*';
 		else if (client->stack != current_client()->stack &&
@@ -141,32 +219,30 @@ draw_menu()
 			c = '^';
 		else
 			c = ' ';
+#endif
 
 		if (name == NULL)
 			name = "???";
 		if (CLIENT_STACK(client) == stack)
-			snprintf(buf, sizeof(buf), "%c %s", c, name);
+			snprintf(buf, sizeof(buf), "%s", name);
 		else if (CLIENT_STACK(client) != NULL)
-			snprintf(buf, sizeof(buf), "%c %s [%d]", c, name,
+			snprintf(buf, sizeof(buf), "%s [%d]", name,
 			CLIENT_STACK(client)->num);
 		else
-			snprintf(buf, sizeof(buf), "%c %s [??]", c, name);
-
-		font_x = _fs->min_bounds.lbearing;
-		font_y = _fs->max_bounds.ascent;
-		font_width = _fs->max_bounds.rbearing -
-		    _fs->min_bounds.lbearing;
-		font_height = _fs->max_bounds.ascent +
-		    _fs->max_bounds.descent;
+			snprintf(buf, sizeof(buf), "%s [??]", name);
 
 		x = font_x;
 		y = (row * font_height) + font_y;
 
-		if (client == current)
-			XDrawImageString(display(), _menu, _focus_gc, x, y,
-			    buf, strlen(buf));
-		else
-			XDrawImageString(display(), _menu, _gc, x, y, buf,
+		if (client == current) {
+			if (!_highlight)
+				XDrawString(display(), _menu, _focus_gc,
+				    x, y, buf, strlen(buf));
+			else
+				XDrawString(display(), _menu,
+				    _highlight_gc, x, y, buf, strlen(buf));
+		} else
+			XDrawString(display(), _menu, _gc, x, y, buf,
 			    strlen(buf));
 		row++;
 	}
@@ -178,31 +254,46 @@ show_menu()
 	if (_menu == 0)
 		create_menu();
 	current = current_client();
-	XMapWindow(display(), _menu);
-	XSync(display(), False);
-	draw_menu();
+	if (!_menu_visible) {
+		XMapWindow(display(), _menu);
+		XSync(display(), False);
+		draw_menu();
+		_menu_visible = 1;
+	}
 }
 
 void
 hide_menu()
 {
-	XUnmapWindow(display(), _menu);
+	if (_menu_visible) {
+		XUnmapWindow(display(), _menu);
+		_menu_visible = 0;
+		current = NULL;
+	}
 }
 
 void
 focus_menu_backward()
 {
+	if (!_menu_visible)
+		return;
+
 	current = prev_client(current);
-	if (current == NULL)
-		current = next_client(NULL);
+	if (current == NULL) {
+		hide_menu();
+		return;
+	}
 	draw_menu();
 }
 
 void
 focus_menu_forward()
 {
-	current = next_client(current);
-	if (current == NULL)
-		current = next_client(NULL);
+	if (!_menu_visible) {
+		show_menu();
+		return;
+	}
+	if (next_client(current) != NULL)
+		current = next_client(current);
 	draw_menu();
 }

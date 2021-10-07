@@ -104,6 +104,8 @@ void resize_stack(struct stack *, unsigned short);
 struct stack *find_stack(int);
 void resize_client(struct client *);
 void toggle_stacks_maxwidth_override(void);
+void highlight_stacks(int);
+void draw_stacks(void);
 
 #if TRACE
 void dump_stack(struct stack *);
@@ -146,8 +148,12 @@ void select_menu_item(void);
 void select_move_menu_item(void);
 void select_menu_item_right(void);
 void select_menu_item_left(void);
+void move_menu_item_right(void);
+void move_menu_item_left(void);
 void show_menu(void);
 void hide_menu(void);
+int is_menu_visible(void);
+void highlight_menu(int);
 
 void do_keyaction(XKeyEvent *);
 void unbind_keys();

@@ -45,6 +45,7 @@ handle_event(XEvent *event)
 
 	switch (event->type) {
 	case KeyRelease:
+	case KeyPress:
 		do_keyaction(&(event->xkey));
 		break;
 	case PropertyNotify:

@@ -59,22 +59,10 @@ Clients
 -------
 
 Menu		Cycle to next client in any stack
-Win+Down	Cycle to next client in this stack
-Ctrl+Menu	Open clients menu
-
-Client menu
------------
-
-Ctrl+Menu	Close menu
-Esc		Close menu
-Up		Focus previous item in menu list
-Down		Focus next item in menu list
-Enter		Move menu item to current stack and close menu
-Shift+Enter	Select menu item in its stack and close menu
-Left		Move selected item to a stack on the left side,
-		focus the stack and close the menu
-Right		Move selected item to a stack on the right side,
-		focus the stack and close the menu
+Win+Down	Select client / raise selected client
+Win+Up		Select client / raise selected client
+Ctrl+Win+Left	Move selected client to stack on the left
+Ctrl+Win+Right	Move selected client to stack on the right
 
 Build
 =====

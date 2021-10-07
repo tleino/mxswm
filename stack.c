@@ -22,17 +22,25 @@
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 static struct stack *_head;
 static struct stack *_focus;
 static XFontStruct *_fs;
-
 static GC _gc;
+static int _highlight;
 
 static void create_stack_titlebar(struct stack *);
 static int stack_width(int, int, int);
 
 static int maxwidth_override;
+
+void
+highlight_stacks(int i)
+{
+	_highlight = i;
+	draw_stacks();
+}
 
 void
 toggle_stacks_maxwidth_override()
@@ -104,6 +112,7 @@ draw_stack(struct stack *stack)
 	struct client *client;
 	int x, y;
 	int font_width, font_height, font_x, font_y;
+	char buf[1024];
 
 	dpy = display();
 	client = find_top_client(stack);
@@ -120,9 +129,25 @@ draw_stack(struct stack *stack)
 
 		x = font_x;
 		y = (0 * font_height) + font_y;
+
+		if (_highlight)
+			snprintf(buf, sizeof(buf), "stack %d",
+			    stack->num);
+		else
+			snprintf(buf, sizeof(buf), "%s", client->name);
+
 		XDrawString(display(), stack->window, _gc, x, y,
-		    client->name, strlen(client->name));
+		    buf, strlen(buf));
 	}
+}
+
+void
+draw_stacks()
+{
+	struct stack *np;
+
+	for (np = _head; np != NULL; np = np->next)
+		draw_stack(np);
 }
 
 static void
@@ -371,15 +396,26 @@ void
 focus_stack_forward()
 {
 	struct stack *sp;
+	int was_visible;
+
+	was_visible = is_menu_visible();
 
 	sp = current_stack();
 	focus_stack(sp->next != NULL ? sp->next : _head);
+
+	if (was_visible) {
+		hide_menu();
+		show_menu();
+	}
 }
 
 void
 focus_stack_backward()
 {
 	struct stack *sp, *np;
+	int was_visible;
+
+	was_visible = is_menu_visible();
 
 	sp = current_stack();
 	if (sp->prev != NULL)
@@ -391,6 +427,11 @@ focus_stack_backward()
 		assert(np != NULL);
 
 		focus_stack(np);
+	}
+
+	if (was_visible) {
+		hide_menu();
+		show_menu();
 	}
 }
 

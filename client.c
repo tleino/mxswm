@@ -136,16 +136,11 @@ next_client(struct client *prev)
 struct client *
 prev_client(struct client *client)
 {
-	struct client *np;
-
 	if (client == NULL)
 		return _head;
-	if (client->prev == NULL) {
-		np = client;
-		while (np && np->next)
-			np = np->next;
-		return np;
-	}
+	if (client->prev == NULL)
+		return NULL;
+
 	return client->prev;
 }
 
