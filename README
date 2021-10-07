@@ -54,6 +54,8 @@ F2		Add window stack
 F3		Toggle overriding maxwidth setting
 Win+Left	Select stack on the left
 Win+Right	Select stack on the right
+Ctrl+Win+Left	Move current stack to the left
+Ctrl+Win+Right	Move current stack to the right
 
 Clients
 -------

@@ -77,8 +77,15 @@ static void
 move_menu_item(int dir)
 {
 	struct client *client;
+	struct stack *stack;
 
 	client = current;
+	stack = current_stack();
+
+	if (client == NULL || !_menu_visible) {
+		move_stack(dir);
+		return;
+	}
 
 	if (dir == -1)
 		focus_stack_backward();
@@ -90,7 +97,6 @@ move_menu_item(int dir)
 		focus_client(client, client->stack);
 		client = NULL;
 	}
-
 	draw_menu();
 }
 

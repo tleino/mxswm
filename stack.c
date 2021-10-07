@@ -36,6 +36,54 @@ static int stack_width(int, int, int);
 static int maxwidth_override;
 
 void
+move_stack(int dir)
+{
+	struct stack *stack;
+	struct stack *tmp;
+
+	stack = current_stack();
+
+	switch (dir) {
+	case -1:
+		if (stack == _head || stack->prev == NULL)
+			return;
+
+		tmp = stack->prev;
+		if (stack->next != NULL)
+			stack->next->prev = tmp;
+		if (tmp->prev != NULL)
+			tmp->prev->next = stack;
+		tmp->next = stack->next;
+		stack->next = tmp;
+		stack->prev = tmp->prev;
+		tmp->prev = stack;
+		if (tmp == _head)
+			_head = stack;
+		break;
+	case 1:
+		if (stack->next == NULL)
+			return;
+
+		tmp = stack->next;
+		if (stack->prev != NULL)
+			stack->prev->next = tmp;
+		if (tmp->prev != NULL)
+			tmp->prev->next = tmp;
+		tmp->prev = stack->prev;
+		stack->prev = tmp;
+		stack->next = tmp->next;
+		tmp->next = stack;
+		if (stack == _head)
+			_head = tmp;
+		break;
+	default:
+		assert(0);
+	}
+	resize_stacks();
+	draw_stacks();
+}
+
+void
 highlight_stacks(int i)
 {
 	_highlight = i;

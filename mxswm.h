@@ -106,6 +106,7 @@ void resize_client(struct client *);
 void toggle_stacks_maxwidth_override(void);
 void highlight_stacks(int);
 void draw_stacks(void);
+void move_stack(int);
 
 #if TRACE
 void dump_stack(struct stack *);
