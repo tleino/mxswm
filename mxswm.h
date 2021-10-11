@@ -102,6 +102,7 @@ void focus_stack_backward(void);
 struct stack *current_stack(void);
 void resize_stack(struct stack *, unsigned short);
 struct stack *find_stack(int);
+struct stack *find_stack_xy(unsigned short, unsigned short);
 void resize_client(struct client *);
 void toggle_stacks_maxwidth_override(void);
 void highlight_stacks(int);

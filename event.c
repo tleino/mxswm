@@ -42,8 +42,25 @@ handle_event(XEvent *event)
 {
 	Window window;
 	struct client *client;
+	struct stack *stack;
 
 	switch (event->type) {
+	case ButtonPress:
+		window = event->xbutton.window;
+		stack = find_stack_xy(event->xbutton.x, event->xbutton.y);
+
+		/*
+		 * We are in XGrabButton mode, do the correct thing for
+		 * click-to-focus based on the current focus state and
+		 * click location.
+		 */
+		if (stack != NULL && current_stack() != stack) {
+			XAllowEvents(display(), SyncPointer, CurrentTime);
+			focus_stack(stack);
+		} else
+			XAllowEvents(display(), ReplayPointer, CurrentTime);
+
+		break;
 	case KeyRelease:
 	case KeyPress:
 		do_keyaction(&(event->xkey));

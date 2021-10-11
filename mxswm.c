@@ -37,7 +37,16 @@ select_root_events(Display *display)
 	XSelectInput(display, DefaultRootWindow(display),
 	             SubstructureNotifyMask |
 	             SubstructureRedirectMask |
-	             KeyReleaseMask);
+	             KeyReleaseMask |
+	             ButtonPressMask |
+	             ButtonReleaseMask);
+
+	/*
+	 * Enable click-to-focus.
+	 */
+	XGrabButton(display, 1, 0, DefaultRootWindow(display), True,
+	            ButtonPressMask | ButtonReleaseMask, GrabModeSync,
+		    GrabModeAsync, None, None);
 
 	XSync(display, False);
 	XSetErrorHandler(None);

@@ -98,6 +98,19 @@ toggle_stacks_maxwidth_override()
 }
 
 struct stack *
+find_stack_xy(unsigned short x, unsigned short y)
+{
+	struct stack *np;
+
+	for (np = _head; np != NULL; np = np->next)
+		if (x >= np->x && x < np->x + np->width &&
+		    y >= np->y && y < np->y + np->height)
+			return np;
+
+	return NULL;
+}
+
+struct stack *
 find_stack(int num)
 {
 	struct stack *np;
