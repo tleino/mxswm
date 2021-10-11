@@ -516,11 +516,9 @@ current_stack()
 void
 dump_stack(struct stack *sp)
 {
-	printf("stack: %ju (width: %d, +%d+%d)",
-	    (uintmax_t) sp, sp->width, sp->x, sp->y);
-	if (sp == _focus)
-		printf(" (focused)");
-	putchar('\n');
+	TRACE_LOG("stack %s%d (width: %d, +%d+%d)",
+	    (sp == _focus) ? "*" : " ",
+	    sp->num, sp->width, sp->x, sp->y);
 }
 
 void
@@ -528,7 +526,6 @@ dump_stacks()
 {
 	struct stack *np;
 
-	printf("focus: %ju\n", (uintmax_t) current_stack());
 	for (np = _head; np != NULL; np = np->next)
 		dump_stack(np);
 }

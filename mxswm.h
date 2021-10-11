@@ -21,6 +21,26 @@
 
 #include <X11/Xlib.h>
 
+#ifdef TRACE
+#include <stdio.h>
+const char *str_event(XEvent *);
+const char *current_event(void);
+Window current_window(void);
+
+#define TRACE_LOG(...)  \
+	do { \
+		fprintf(stderr, "%-16s 0x%08lx %-16s ", \
+		    current_event(), current_window(), __FUNCTION__); \
+		fprintf(stderr, __VA_ARGS__); \
+		fprintf(stderr, "\n"); \
+	} while(0)
+
+#define EVENT_STR(event) str_event(event)
+#else
+#define TRACE_LOG(...)   ((void) 0)
+#define EVENT_STR(...)   ((void) 0)
+#endif
+
 #ifndef ARRLEN
 #define ARRLEN(_x) sizeof((_x)) / sizeof((_x)[0])
 #endif

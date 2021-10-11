@@ -261,21 +261,24 @@ show_menu()
 		create_menu();
 	current = current_client();
 	if (!_menu_visible) {
+		TRACE_LOG("map menu window %lx", _menu);
 		XMapWindow(display(), _menu);
-		XSync(display(), False);
-		draw_menu();
 		_menu_visible = 1;
-	}
+		draw_menu();
+	} else
+		TRACE_LOG("ignore");
 }
 
 void
 hide_menu()
 {
 	if (_menu_visible) {
+		TRACE_LOG("hide menu window %lx", _menu);
 		XUnmapWindow(display(), _menu);
 		_menu_visible = 0;
 		current = NULL;
-	}
+	} else
+		TRACE_LOG("ignore");
 }
 
 void

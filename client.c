@@ -147,6 +147,7 @@ prev_client(struct client *client)
 void
 remove_client(struct client *client)
 {
+	TRACE_LOG("");
 	focus_menu_forward();
 
 	if (client->next != NULL)
@@ -164,6 +165,7 @@ remove_client(struct client *client)
 		free(client->name);
 	free(client);
 
+	TRACE_LOG("draw menu");
 	draw_menu();
 }
 
@@ -329,10 +331,9 @@ current_client()
 void
 dump_client(struct client *client)
 {
-	printf("client: %ju", (uintmax_t) client);
-	if (client == _focus)
-		printf(" (focused)");
-	putchar('\n');
+	TRACE_LOG("0x%08lx %s%s", client->window,
+	    (client == _focus) ? "*" : " ",
+	    client->name != NULL ? client->name : "<no name>");
 }
 
 void
@@ -340,7 +341,6 @@ dump_clients()
 {
 	struct client *np;
 
-	printf("focus: %ju\n", (uintmax_t) current_client());
 	for (np = _head; np != NULL; np = np->next)
 		dump_client(np);
 }

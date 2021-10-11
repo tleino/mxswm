@@ -165,6 +165,8 @@ _do_keyaction(XKeyEvent *xkey, const struct binding *bindings, size_t sz)
 	sym = XLookupKeysym(xkey, 0);
 	mask = xkey->state;
 
+	TRACE_LOG("sym=%lu", sym);
+
 	for (i = 0; i < sz; i++) {
 		kb = &(bindings[i]);
 		if (kb->keysym == sym &&
