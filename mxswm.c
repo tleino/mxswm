@@ -35,18 +35,23 @@ select_root_events(Display *display)
 	XSetErrorHandler(wm_rights_error);
 
 	XSelectInput(display, DefaultRootWindow(display),
+#if 0
 	             SubstructureNotifyMask |
+#endif
 	             SubstructureRedirectMask |
 	             KeyReleaseMask |
-	             ButtonPressMask |
-	             ButtonReleaseMask);
+	             ButtonPressMask);
 
 	/*
 	 * Enable click-to-focus.
 	 */
 	XGrabButton(display, 1, 0, DefaultRootWindow(display), True,
-	            ButtonPressMask | ButtonReleaseMask, GrabModeSync,
-		    GrabModeAsync, None, None);
+#if 0
+	            ButtonPressMask | ButtonReleaseMask,
+#else
+	            ButtonPressMask,
+#endif
+	            GrabModeSync, GrabModeAsync, None, None);
 
 	XSync(display, False);
 	XSetErrorHandler(None);
