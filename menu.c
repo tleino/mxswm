@@ -154,7 +154,9 @@ draw_menu()
 	int row;
 	int nclients;
 
-	if (_menu == 0)
+	TRACE_LOG("visible=%d", _menu_visible);
+
+	if (_menu_visible == 0 || _menu == 0)
 		return;
 
 	if (_fs == NULL) {
@@ -203,7 +205,6 @@ draw_menu()
 	    nclients * font_height);
 
 	XRaiseWindow(display(), _menu);
-	XSync(display(), False);
 
 	client = NULL;
 	x = 40;
@@ -298,6 +299,10 @@ focus_menu_backward()
 void
 focus_menu_forward()
 {
+	/*
+	 * TODO: Fix this... destroy of client when menu is open
+	 *       causes this menu to open...
+	 */
 	if (!_menu_visible) {
 		show_menu();
 		return;

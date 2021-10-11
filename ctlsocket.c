@@ -13,6 +13,13 @@
 #include <sys/select.h>
 #include <string.h>
 
+static void process_xevents(void);
+static void process_ctl_client(int);
+static void accept_ctl_client(int);
+
+static int clientfd[128];
+static int nclients;
+
 int
 listen_ctlsocket()
 {
@@ -67,38 +74,87 @@ listen_ctlsocket()
 	return fd;
 }
 
+static void
+process_ctl_client(int j)
+{
+	ssize_t n;
+	static char buf[4096];
+	Display *dpy = display();
+
+	TRACE_LOG("");
+	n = read(clientfd[j], buf, sizeof(buf));
+	if (n == -1 || n == 0) {
+		if (n == -1)
+			warn("read");
+		nclients--;
+		close(clientfd[j]);
+		memmove(&clientfd[j], &clientfd[j+1],
+		    (nclients - j) * sizeof(int));
+		TRACE_LOG("remove\n");
+	} else {
+		buf[n] = '\0';
+		run_ctl_line(buf);
+		TRACE_LOG("flush\n");
+		XFlush(dpy);
+	}
+}
+
+static void
+accept_ctl_client(int ctlfd)
+{
+	int fd;
+
+	TRACE_LOG("");
+	fd = accept(ctlfd, NULL, NULL);
+	if (nclients == 128) {
+		warn("maximum ctl clients");
+		close(fd);
+	} else if (fd != -1) {
+		clientfd[nclients++] = fd;
+		TRACE_LOG("add ctl client\n");
+	} else
+		warn("accept");
+}
+
+static void
+process_xevents()
+{
+	XEvent event;
+	Display *dpy = display();
+
+	while (XPending(dpy)) {
+		XNextEvent(dpy, &event);
+		handle_event(&event);
+	}
+	TRACE_LOG("flush\n");
+	XFlush(dpy);
+}
+
 void
 run_ctlsocket_event_loop(int ctlfd)
 {
-	int clientfd[128];
-	char buf[4096];
 	fd_set rfds;
-	int i, nready, nclients, j;
-	ssize_t n;
-	int fd;
+	int nready, i, j;
 	int maxfd;
 	int xfd;
 	Display *dpy;
-	XEvent event;
 
 	dpy = display();
-
-	XSync(dpy, False);
 	xfd = ConnectionNumber(dpy);
 	nclients = 0;
+
+	process_xevents();
 	for (;;) {
-		maxfd = 0;
 		FD_ZERO(&rfds);
-		if (xfd > maxfd)
-			maxfd = xfd;
 		FD_SET(xfd, &rfds);
+		maxfd = xfd;
+		FD_SET(ctlfd, &rfds);
 		if (ctlfd > maxfd)
 			maxfd = ctlfd;
-		FD_SET(ctlfd, &rfds);
 		for (i = 0; i < nclients; i++) {
+			FD_SET(clientfd[i], &rfds);
 			if (clientfd[i] > maxfd)
 				maxfd = clientfd[i];
-			FD_SET(clientfd[i], &rfds);
 		}
 
 		nready = select(maxfd + 1, &rfds, NULL, NULL, NULL);
@@ -106,43 +162,13 @@ run_ctlsocket_event_loop(int ctlfd)
 			err(1, "select");
 
 		for (i = 0; i < nready; i++) {
-			if (FD_ISSET(xfd, &rfds)) {
-				j = XPending(dpy) + 1;
-				while (j--) {
-					XNextEvent(dpy, &event);
-					handle_event(&event);
-					XSync(dpy, False);
-				}
-			} else if (FD_ISSET(ctlfd, &rfds)) {
-				fd = accept(ctlfd, NULL, NULL);
-				if (nclients == 128)
-					close(fd);
-				else if (fd != -1)
-					clientfd[nclients++] = fd;
-				else
-					warn("accept");
-			} else for (j = 0; j < nclients; j++) {
-				if (FD_ISSET(clientfd[j],
-				    &rfds)) {
-					n = read(clientfd[j], buf,
-					    sizeof(buf));
-					if (n == -1)
-						err(1, "read");
-					else if (n == 0) {
-						nclients--;
-						close(clientfd[j]);
-						memmove(
-						    &clientfd[i],
-						    &clientfd[i+1],
-						    (nclients - j) *
-						    sizeof(int));
-					} else {
-						buf[n] = '\0';
-						run_ctl_line(buf);
-						XSync(dpy, False);
-					}
-				}
-			}
+			if (FD_ISSET(xfd, &rfds))
+				process_xevents();
+			else if (FD_ISSET(ctlfd, &rfds))
+				accept_ctl_client(ctlfd);
+			else for (j = 0; j < nclients; j++)
+				if (FD_ISSET(clientfd[j], &rfds))
+					process_ctl_client(j);
 		}
 	}
 }
