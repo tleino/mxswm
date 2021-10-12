@@ -156,8 +156,9 @@ create_stack_titlebar(struct stack *stack)
 	h = BORDERWIDTH;
 	x = BORDERWIDTH;
 	y = 0;
-	v = CWBackPixel;
+	v = CWBackPixel | CWOverrideRedirect;
 	a.background_pixel = TITLEBAR_NORMAL_COLOR;
+	a.override_redirect = True;
 	stack->window = XCreateWindow(dpy,
 	    DefaultRootWindow(dpy),
 	    x, y, w, h, 0, CopyFromParent,

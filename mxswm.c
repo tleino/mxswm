@@ -27,6 +27,7 @@ Display *_display;
 
 static void select_root_events(Display *);
 static int wm_rights_error(Display *, XErrorEvent *);
+static int manageable(Window, int *);
 
 static void
 select_root_events(Display *display)
@@ -36,7 +37,6 @@ select_root_events(Display *display)
 
 	XSelectInput(display, DefaultRootWindow(display),
 	             SubstructureNotifyMask |
-	             SubstructureRedirectMask |
 	             KeyReleaseMask |
 	             ButtonPressMask |
 	             ButtonReleaseMask);
@@ -65,6 +65,7 @@ capture_existing_windows(Display *display)
 {
 	Window root, parent, *children;
 	int i;
+	int mapped;
 	unsigned int nchildren;
 
 	if (XQueryTree(display, DefaultRootWindow(display),
@@ -74,8 +75,9 @@ capture_existing_windows(Display *display)
 	}
 
 	for (i = 0; i < nchildren; i++) {
-		if (manageable(children[i])) {
-			if (add_client(children[i], NULL) == NULL)
+		if (manageable(children[i], &mapped)) {
+			TRACE_LOG("capture %lx", children[i]);
+			if (add_client(children[i], NULL, mapped) == NULL)
 				warn("add_client");
 		} else
 			warnx("did not capture %lx", children[i]);
@@ -86,17 +88,20 @@ capture_existing_windows(Display *display)
 }
 
 int
-manageable(Window w)
+manageable(Window w, int *mapped)
 {
 	XWindowAttributes wa;
-	int mapped, redirectable;
+	int redirectable;
 	Display *d = display();
 
-	XGetWindowAttributes(d, w, &wa);
-	mapped = (wa.map_state != IsUnmapped);
+	if (!XGetWindowAttributes(d, w, &wa)) {
+		warnx("XGetWindowAttributes failed for %lx", w);
+		return 0;
+	}
+	*mapped = (wa.map_state != IsUnmapped);
 	redirectable = (wa.override_redirect != True);
 
-	return (mapped && redirectable);
+	return redirectable;
 }
 
 static void

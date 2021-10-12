@@ -46,10 +46,11 @@ update_client_name(struct client *client)
 }
 
 struct client *
-add_client(Window window, struct client *after)
+add_client(Window window, struct client *after, int mapped)
 {
 	struct client *client;
 
+	TRACE_LOG("%lx mapped=%d", window, mapped);
 	client = malloc(sizeof(struct client));
 	if (client == NULL)
 		return NULL;
@@ -57,6 +58,8 @@ add_client(Window window, struct client *after)
 	client->window = window;
 	client->name = NULL;
 	client->stack = current_stack();
+	assert(mapped == 0 || mapped == 1);
+	client->mapped = mapped;
 
 	client->prev = after;
 	if (after != NULL) {
@@ -77,9 +80,10 @@ add_client(Window window, struct client *after)
 			_head->next->prev = _head;
 	}
 
-	XSetWindowBorderWidth(display(), window, 0);
-
-	XSelectInput(display(), window, PropertyChangeMask);
+	if (mapped) {
+		XSetWindowBorderWidth(display(), window, 0);
+		XSelectInput(display(), window, PropertyChangeMask);
+	}
 
 	update_client_name(client);
 	focus_client(client, NULL);
@@ -110,45 +114,44 @@ have_client(Window window)
 }
 
 struct client *
-find_client(Window window)
+next_client(struct client *client)
 {
 	struct client *np;
 
-	for (np = _head; np != NULL; np = np->next) {
-		if (np->window != window)
-			continue;
-
-		return np;
-	}
-
-	return add_client(window, NULL);
-}
-
-struct client *
-next_client(struct client *prev)
-{
-	if (prev == NULL)
-		return _head;
+	np = client;
+	if (np == NULL)
+		np = _head;
 	else
-		return prev->next;
+		np = np->next;
+
+	for (; np != NULL; np = np->next)
+		if (np->mapped)
+			break;
+
+	return np;
 }
 
 struct client *
 prev_client(struct client *client)
 {
-	if (client == NULL)
-		return _head;
-	if (client->prev == NULL)
-		return NULL;
+	struct client *np;
 
-	return client->prev;
+	np = client;
+	if (np == NULL)
+		return next_client(NULL);
+
+	for (np = np->prev; np != NULL; np = np->prev)
+		if (np->mapped)
+			break;
+
+	return np;
 }
 
 void
 remove_client(struct client *client)
 {
 	TRACE_LOG("");
-	focus_menu_forward();
+	close_menu();
 
 	if (client->next != NULL)
 		client->next->prev = client->prev;
@@ -209,7 +212,7 @@ resize_client(struct client *client)
 
 	dpy = display();
 
-	if (client == NULL)
+	if (client == NULL || !client->mapped)
 		return;
 
 	assert(client->stack != NULL);
@@ -227,7 +230,7 @@ focus_client(struct client *client, struct stack *stack)
 	struct client *prev;
 	Window window;
 
-	if (client == NULL)
+	if (client == NULL || !client->mapped)
 		return;
 
 	if (stack == NULL)
@@ -331,8 +334,9 @@ current_client()
 void
 dump_client(struct client *client)
 {
-	TRACE_LOG("0x%08lx %s%s", client->window,
-	    (client == _focus) ? "*" : " ",
+	TRACE_LOG("0x%08lx (%c%c) %s", client->window,
+	    (client == _focus) ? 'f' : '-',
+	    (client->mapped) ? 'm' : '-',
 	    client->name != NULL ? client->name : "<no name>");
 }
 

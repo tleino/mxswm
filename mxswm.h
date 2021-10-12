@@ -98,6 +98,7 @@ struct stack {
 struct client {
 	Window window;
 	char *name;
+	int mapped;
 	struct stack *stack;
 	struct client *next;
 	struct client *prev;
@@ -137,8 +138,7 @@ void dump_stacks(void);
 #define dump_stack(x) do { } while(0)
 #endif
 
-struct client *add_client(Window, struct client *);
-struct client *find_client(Window);
+struct client *add_client(Window, struct client *, int);
 struct client *have_client(Window);
 void remove_client(struct client *);
 void top_client(struct client *);
@@ -156,8 +156,6 @@ void update_client_name(struct client *);
 unsigned short display_height(void);
 unsigned short display_width(void);
 Display *display(void);
-
-int manageable(Window);
 
 int handle_event(XEvent *);
 

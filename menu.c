@@ -54,8 +54,9 @@ create_menu()
 	h = display_height() / 2;
 	x = w / 2;
 	y = h / 2;
-	v = CWBackPixel;
+	v = CWBackPixel | CWOverrideRedirect;
 	a.background_pixel = TITLEBAR_FOCUS_COLOR;
+	a.override_redirect = True;
 	_menu = XCreateWindow(display(),
 	    DefaultRootWindow(display()),
 	    x, y, w, h, 0, CopyFromParent,
@@ -299,10 +300,6 @@ focus_menu_backward()
 void
 focus_menu_forward()
 {
-	/*
-	 * TODO: Fix this... destroy of client when menu is open
-	 *       causes this menu to open...
-	 */
 	if (!_menu_visible) {
 		show_menu();
 		return;

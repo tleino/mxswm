@@ -19,9 +19,6 @@
 #include "mxswm.h"
 #include <err.h>
 
-static void do_map(Window);
-static void do_configure(Window, struct stack *);
-
 static Window window;
 
 #ifdef TRACE
@@ -102,43 +99,6 @@ str_event(XEvent *event)
 }
 #endif
 
-static void
-do_configure(Window window, struct stack *stack)
-{
-	XWindowChanges xwc;
-	unsigned long xwcm;
-
-	xwc.width = stack->width;
-	xwc.height = stack->height;
-	xwc.x = stack->x;
-	xwc.y = stack->y;
-	xwc.border_width = 0;
-	xwcm = (CWX | CWY | CWWidth | CWHeight | CWBorderWidth);
-
-	TRACE_LOG("configuring as %dx%d, bww %d",
-	      xwc.width, xwc.height, xwc.border_width);
-	XConfigureWindow(display(), window, xwcm, &xwc);
-}
-
-static void
-do_map(Window window)
-{
-	XWindowAttributes wa;
-	Display *dpy = display();
-
-	TRACE_LOG("get attributes");
-	XGetWindowAttributes(dpy, window, &wa);
-	if (wa.override_redirect == True) {
-		TRACE_LOG("had override_redirect");
-		return;
-	}
-	TRACE_LOG("map window");
-	XMapWindow(dpy, window);
-
-	if (add_client(window, NULL) == NULL)
-		warn("add_client");
-}
-
 int
 handle_event(XEvent *event)
 {
@@ -183,7 +143,19 @@ handle_event(XEvent *event)
 		} else
 			TRACE_LOG("ignore");
 		break;
+	case MapNotify:
 	case UnmapNotify:
+		window = event->xmap.window;
+		client = have_client(window);
+		if (client != NULL) {
+			TRACE_LOG("mapped was %d", client->mapped);
+			client->mapped = (event->type == MapNotify) ? 1 : 0;
+			TRACE_LOG("mapped is now %d", client->mapped);
+			if (client->mapped)
+				focus_client(client, client->stack);
+		} else
+			TRACE_LOG("ignore");
+		break;
 	case DestroyNotify:
 		if (event->type == UnmapNotify)
 			window = event->xmap.window;
@@ -196,13 +168,24 @@ handle_event(XEvent *event)
 		} else
 			TRACE_LOG("ignore");
 		break;
-	case ConfigureRequest:
-		window = event->xconfigurerequest.window;
-		do_configure(window, current_stack());
+	case ConfigureNotify:
+		window = event->xconfigure.window;
+		TRACE_LOG("%dx%d+%d+%d", event->xconfigure.width,
+		    event->xconfigure.height, event->xconfigure.x,
+		    event->xconfigure.y);
 		break;
-	case MapRequest:
-		window = event->xmaprequest.window;
-		do_map(window);
+	case CreateNotify:
+		window = event->xcreatewindow.window;
+		TRACE_LOG("%dx%d+%d+%d bw=%d override=%d",
+		    event->xcreatewindow.width, event->xcreatewindow.height,
+		    event->xcreatewindow.x, event->xcreatewindow.y,
+		    event->xcreatewindow.border_width,
+		    event->xcreatewindow.override_redirect);
+		if (event->xcreatewindow.override_redirect == True)
+			TRACE_LOG("ignore");
+		else
+			if (add_client(window, NULL, 0) == NULL)
+				warn("add_client");
 		break;
 	default:
 		TRACE_LOG("unhandled");
