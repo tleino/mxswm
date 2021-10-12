@@ -70,11 +70,14 @@ run_ctl_line(const char *str)
 	int stackno, width;
 	struct stack *stack;
 
+	TRACE_LOG("\"%s\"", str);
 	if (sscanf(str, "stack %d width %d", &stackno, &width) == 2) {
 		stack = find_stack(stackno);
 		if (stack != NULL)
 			stack->prefer_width = width;
 		resize_stacks();
 		focus_stack(stack);
+	} else if (strncmp(str, "add stack", strlen("add stack")) == 0) {
+		add_stack(current_stack());
 	}
 }
