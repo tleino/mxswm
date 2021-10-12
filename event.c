@@ -20,6 +20,7 @@
 #include <err.h>
 
 static void do_map(Window);
+static void do_configure(Window, struct stack *);
 
 static Window window;
 
@@ -102,6 +103,24 @@ str_event(XEvent *event)
 #endif
 
 static void
+do_configure(Window window, struct stack *stack)
+{
+	XWindowChanges xwc;
+	unsigned long xwcm;
+
+	xwc.width = stack->width;
+	xwc.height = stack->height;
+	xwc.x = stack->x;
+	xwc.y = stack->y;
+	xwc.border_width = 0;
+	xwcm = (CWX | CWY | CWWidth | CWHeight | CWBorderWidth);
+
+	TRACE_LOG("configuring as %dx%d, bww %d",
+	      xwc.width, xwc.height, xwc.border_width);
+	XConfigureWindow(display(), window, xwcm, &xwc);
+}
+
+static void
 do_map(Window window)
 {
 	XWindowAttributes wa;
@@ -176,6 +195,10 @@ handle_event(XEvent *event)
 			remove_client(client);
 		} else
 			TRACE_LOG("ignore");
+		break;
+	case ConfigureRequest:
+		window = event->xconfigurerequest.window;
+		do_configure(window, current_stack());
 		break;
 	case MapRequest:
 		window = event->xmaprequest.window;
