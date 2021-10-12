@@ -168,6 +168,7 @@ main(int argc, char *argv[])
 
 	bind_keys();
 
+	run_ctl_lines();
 #if WANT_CTLSOCKET
 	ctlfd = listen_ctlsocket();
 #else

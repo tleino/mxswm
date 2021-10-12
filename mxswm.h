@@ -182,8 +182,9 @@ void bind_keys();
 #if WANT_CTLSOCKET
 int listen_ctlsocket(void);
 void run_ctlsocket_event_loop(int);
-void run_ctl_line(const char *);
 #endif
+void run_ctl_line(const char *);
+void run_ctl_lines(void);
 
 #if TRACE
 void dump_client(struct client *);
