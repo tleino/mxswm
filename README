@@ -31,9 +31,6 @@ Feature TODO
  - Choose window by typing letters of its name (similar to
    reverse-search or ^R in shells).
 
- - Move between multiple windows without going through the menu,
-   i.e. make the existing "cycle to next client" function unlimited.
-
  - Close windows from menu / close foreground window.
 
  - Xinerama (multi-screen) support (can be copied from cocowm).
@@ -60,7 +57,7 @@ Win+H		Toggle hide other stacks (not counting sticky stacks)
 Clients
 -------
 
-Menu		Cycle to next client in any stack
+Win+Menu	Cycle to next client in any stack
 Win+Down	Select client / raise selected client
 Win+Up		Select client / raise selected client
 Ctrl+Win+Left	Move selected client to stack on the left

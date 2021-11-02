@@ -172,14 +172,23 @@ int handle_event(XEvent *);
 void open_menu(void);
 void draw_menu(void);
 void close_menu(void);
+
+void draw_global_menu(void);
+void open_global_menu(void);
+void close_global_menu(void);
+
 void focus_menu_forward(void);
 void focus_menu_backward(void);
+
 void select_menu_item(void);
+void select_next_global_menu(void);
 void select_move_menu_item(void);
 void select_menu_item_right(void);
 void select_menu_item_left(void);
+
 void move_menu_item_right(void);
 void move_menu_item_left(void);
+
 void show_menu(void);
 void hide_menu(void);
 int is_menu_visible(void);

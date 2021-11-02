@@ -22,13 +22,18 @@
 #include <err.h>
 
 static Window _menu;
+static Window _global_menu;
 static GC _gc, _focus_gc, _highlight_gc;
 static struct client *current;
+static struct client *global_current;
 static XFontStruct *_fs;
 static int _menu_visible;
+static int _global_menu_visible;
 static int _highlight;
+static int font_x, font_y, font_width, font_height;
 
 static void move_menu_item(int);
+static void ensure_font(void);
 
 void
 highlight_menu(int i)
@@ -44,11 +49,36 @@ is_menu_visible()
 }
 
 void
+create_global_menu()
+{
+	int x, y, w, h;
+	XSetWindowAttributes a;
+	unsigned long v;
+
+	ensure_font();
+
+	w = display_width() / 2;
+	h = font_height;
+	x = w/2;
+	y = display_height() / 2 - (h/2);
+	v = CWBackPixel | CWOverrideRedirect;
+	a.background_pixel = TITLEBAR_FOCUS_COLOR;
+	a.override_redirect = True;
+	_global_menu = XCreateWindow(display(),
+	    DefaultRootWindow(display()),
+	    x, y, w, h, 0, CopyFromParent,
+	    InputOutput, CopyFromParent,
+	    v, &a);
+}
+
+void
 create_menu()
 {
 	int x, y, w, h;
 	XSetWindowAttributes a;
 	unsigned long v;
+
+	ensure_font();
 
 	w = 1;
 	h = 1;
@@ -117,7 +147,12 @@ void
 select_move_menu_item()
 {
 	highlight_stacks(0);
-	if (current != NULL) {
+	if (_global_menu_visible) {
+		close_global_menu();
+		if (global_current != NULL)
+			focus_client(global_current, global_current->stack);
+		global_current = NULL;
+	} else if (current != NULL) {
 		focus_client(current, current_stack());
 		current = NULL;
 	}
@@ -142,23 +177,10 @@ select_menu_item_left()
 	close_menu();
 }
 
-void
-draw_menu()
+static void
+ensure_font()
 {
 	XGCValues v;
-	struct client *client;
-	unsigned short x, y;
-	char *name;
-	struct stack *stack = current_stack();
-	char buf[256];
-	int font_x, font_y, font_width, font_height;
-	int row;
-	size_t nclients;
-
-	TRACE_LOG("visible=%d", _menu_visible);
-
-	if (_menu_visible == 0 || _menu == 0)
-		return;
 
 	if (_fs == NULL) {
 		_fs = XLoadQueryFont(display(), FONTNAME);
@@ -169,6 +191,13 @@ draw_menu()
 				errx(1, "couldn't load font: %s",
 				    FALLBACKFONT);
 		}
+
+		font_x = _fs->min_bounds.lbearing;
+		font_y = _fs->max_bounds.ascent;
+		font_width = _fs->max_bounds.rbearing -
+		    _fs->min_bounds.lbearing;
+		font_height = _fs->max_bounds.ascent +
+		    _fs->max_bounds.descent;
 	}
 
 	if (_gc == 0) {
@@ -187,6 +216,88 @@ draw_menu()
 		_highlight_gc = XCreateGC(display(),
 		    DefaultRootWindow(display()), GCForeground | GCFont, &v);
 	}
+}
+
+void
+open_global_menu()
+{
+	if (_global_menu_visible)
+		return;
+
+	global_current = current_client();
+	if (_global_menu == 0)
+		create_global_menu();
+	_global_menu_visible = 1;
+	XMapWindow(display(), _global_menu);
+	draw_global_menu();
+}
+
+void
+close_global_menu()
+{
+	XUnmapWindow(display(), _global_menu);
+	_global_menu_visible = 0;
+}
+
+void
+select_next_global_menu()
+{
+	global_current = next_client(global_current, NULL);
+	if (global_current == NULL)
+		global_current = next_client(NULL, NULL);
+}
+
+void
+draw_global_menu()
+{
+	struct client *client;
+	unsigned short x, y;
+	char *name;
+	char buf[256];
+	int is_last, is_first;
+
+	TRACE_LOG("visible=%d", _menu_visible);
+
+	if (_global_menu_visible == 0 || _global_menu == 0)
+		return;
+
+	client = global_current;
+
+	XClearWindow(display(), _global_menu);
+	XRaiseWindow(display(), _global_menu);
+
+	name = NULL;
+	if (client != NULL)
+		name = client_name(client);
+	if (name == NULL)
+		name = "???";
+
+	is_last = (next_client(global_current, NULL) == NULL);
+	is_first = (global_current == next_client(NULL, NULL));
+
+	snprintf(buf, sizeof(buf), "%c%s%c",
+	    is_first ? '<' : ' ', name, is_last ? '>' : ' ');
+
+	x = font_x;
+	y = font_y;
+	XDrawString(display(), _global_menu, _gc, x, y, buf, strlen(buf));
+}
+
+void
+draw_menu()
+{
+	struct client *client;
+	unsigned short x, y;
+	char *name;
+	struct stack *stack = current_stack();
+	char buf[256];
+	int row;
+	size_t nclients;
+
+	TRACE_LOG("visible=%d", _menu_visible);
+
+	if (_menu_visible == 0 || _menu == 0)
+		return;
 
 	client = NULL;
 	nclients = count_clients(stack);
@@ -196,13 +307,6 @@ draw_menu()
 		return;
 	}
 
-	font_x = _fs->min_bounds.lbearing;
-	font_y = _fs->max_bounds.ascent;
-	font_width = _fs->max_bounds.rbearing -
-	    _fs->min_bounds.lbearing;
-	font_height = _fs->max_bounds.ascent +
-	    _fs->max_bounds.descent;
-
 	XMoveWindow(display(), _menu, STACK_X(stack), BORDERWIDTH);
 	XResizeWindow(display(), _menu, STACK_WIDTH(stack),
 	    nclients * font_height);
@@ -210,20 +314,13 @@ draw_menu()
 	XRaiseWindow(display(), _menu);
 
 	client = NULL;
-	x = 40;
-	y = 40;
 	row = 0;
 	while ((client = next_client(client, stack)) != NULL) {
 		name = client_name(client);
 		if (name == NULL)
 			name = "???";
-		if (CLIENT_STACK(client) == stack)
-			snprintf(buf, sizeof(buf), "%s", name);
-		else if (CLIENT_STACK(client) != NULL)
-			snprintf(buf, sizeof(buf), "%s [%d]", name,
-			CLIENT_STACK(client)->num);
-		else
-			snprintf(buf, sizeof(buf), "%s [??]", name);
+
+		snprintf(buf, sizeof(buf), "%s", name);
 
 		x = font_x;
 		y = (row * font_height) + font_y;

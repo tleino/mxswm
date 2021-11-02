@@ -35,6 +35,7 @@ void _do_keyaction(XKeyEvent *, const struct binding *, size_t);
 static void control_off(void);
 static void control_on(void);
 static void win_on(void);
+void focus_next(void);
 
 /*
  * Assuming normal PC keyboard where Mod4Mask corresponds to Win key,
@@ -90,8 +91,8 @@ static const struct binding binding[] = {
 		NULL, select_move_menu_item
 	},
 	{
-		XK_Menu, 0,
-		NULL, focus_client_forward
+		XK_Menu, Mod4Mask,
+		NULL, focus_next
 	},
 	{
 		XK_Down, Mod4Mask,
@@ -144,6 +145,16 @@ win_on()
 #if 0
 	open_menu();
 #endif
+}
+
+void
+focus_next()
+{
+	open_global_menu();
+	select_next_global_menu();
+	draw_global_menu();
+
+	dump_clients();
 }
 
 void
