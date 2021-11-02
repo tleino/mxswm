@@ -315,28 +315,26 @@ draw_stack(struct stack *stack)
 
 	XClearWindow(dpy, stack->window);
 	XRaiseWindow(dpy, stack->window);
-	if (client != NULL && client->name != NULL) {
-		font_x = _fs->min_bounds.lbearing;
-		font_y = _fs->max_bounds.ascent;
-		font_width = _fs->max_bounds.rbearing -
-		    _fs->min_bounds.lbearing;
-		font_height = _fs->max_bounds.ascent +
-		    _fs->max_bounds.descent;
 
-		x = font_x;
-		y = (0 * font_height) + font_y;
+	font_x = _fs->min_bounds.lbearing;
+	font_y = _fs->max_bounds.ascent;
+	font_width = _fs->max_bounds.rbearing - _fs->min_bounds.lbearing;
+	font_height = _fs->max_bounds.ascent + _fs->max_bounds.descent;
 
-		if (_highlight)
-			snprintf(buf, sizeof(buf), "stack %d (%c%c)",
-			    stack->num,
-			    stack->sticky ? 's' : '-',
-			    stack->prefer_width ? 'w' : '-');
-		else
-			snprintf(buf, sizeof(buf), "%s", client->name);
+	x = font_x;
+	y = (0 * font_height) + font_y;
 
-		XDrawString(display(), stack->window, _gc, x, y,
-		    buf, strlen(buf));
-	}
+	if (_highlight)
+		snprintf(buf, sizeof(buf), "stack %d (%c%c)",
+		    stack->num,
+		    stack->sticky ? 's' : '-',
+		    stack->prefer_width ? 'w' : '-');
+	else if (client != NULL && client->name != NULL)
+		snprintf(buf, sizeof(buf), "%s", client->name);
+	else
+		buf[0] = '\0';
+
+	XDrawString(display(), stack->window, _gc, x, y, buf, strlen(buf));
 }
 
 void
