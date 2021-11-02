@@ -303,7 +303,7 @@ draw_stack(struct stack *stack)
 	struct client *client;
 	int x, y;
 	int font_width, font_height, font_x, font_y, avail;
-	char buf[1024], num[10];
+	char buf[1024], flags[10];
 	size_t nclients;
 
 	dpy = display();
@@ -329,29 +329,34 @@ draw_stack(struct stack *stack)
 	x = font_x;
 	y = (0 * font_height) + font_y;
 
+	if (nclients > 1)
+		snprintf(flags, sizeof(flags), "+%zu", nclients);
+	else
+		flags[0] = '\0';
+
 	if (_highlight)
-		snprintf(buf, sizeof(buf), "stack %d (%c%c)",
-		    stack->num,
+		snprintf(flags, sizeof(flags), "%c%c",
 		    stack->sticky ? 's' : '-',
 		    stack->prefer_width ? 'w' : '-');
+
+	if (_highlight)
+		snprintf(buf, sizeof(buf), "stack %d", stack->num);
 	else if (client != NULL && client->name != NULL)
 		snprintf(buf, sizeof(buf), "%s", client->name);
 	else
 		buf[0] = '\0';
 
-	if (!_highlight && nclients > 1) {
-		snprintf(num, sizeof(num), "+%zu", nclients);
+	if (avail >= strlen(flags))
 		XDrawString(display(), stack->window, _gc, x, y, buf,
-		    MIN(avail-strlen(num), strlen(buf)));
+		    MIN(avail-strlen(flags), strlen(buf)));
+	else
+		XDrawString(display(), stack->window, _gc, x, y, buf,
+		    MIN(avail, strlen(buf)));
 
-		if (avail >= strlen(num))
-			XDrawString(display(), stack->window, _gc,
-			    x + (avail-strlen(num)) *
-			    font_width, y, num, strlen(num));
-	} else {
-		XDrawString(display(), stack->window, _gc, x, y, buf,
-		    strlen(buf));
-	}
+	if (avail >= strlen(flags))
+		XDrawString(display(), stack->window, _gc,
+		    x + (avail-strlen(flags)) * font_width,
+		    y, flags, strlen(flags));
 }
 
 void
