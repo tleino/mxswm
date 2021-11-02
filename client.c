@@ -224,6 +224,16 @@ resize_client(struct client *client)
 }
 
 void
+resize_clients(struct stack *stack)
+{
+	struct client *np;
+
+	for (np = _head; np != NULL; np = np->next)
+		if (np->stack == stack && np->mapped)
+			resize_client(np);
+}
+
+void
 focus_client(struct client *client, struct stack *stack)
 {
 	Display *dpy = display();
@@ -317,6 +327,26 @@ focus_client_backward()
 	}
 
 	focus_client(np, NULL);
+}
+
+void
+unmap_clients(struct stack *stack)
+{
+	struct client *np;
+
+	for (np = _head; np != NULL; np = np->next)
+		if (np->stack == stack && np->mapped)
+			XUnmapWindow(display(), np->window);
+}
+
+void
+map_clients(struct stack *stack)
+{
+	struct client *np;
+
+	for (np = _head; np != NULL; np = np->next)
+		if (np->stack == stack && !np->mapped)
+			XMapWindow(display(), np->window);
 }
 
 struct client *

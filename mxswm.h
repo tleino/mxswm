@@ -95,6 +95,7 @@ struct stack {
 	int prefer_width;
 	int hidden;
 	int sticky;
+	int mapped;
 };
 
 struct client {
@@ -114,6 +115,7 @@ struct client {
 #define CLIENT_STACK(_x) (_x)->stack
 
 struct stack *add_stack(struct stack *);
+struct stack *have_stack(Window);
 void remove_stack(struct stack *);
 void draw_stack(struct stack *);
 void add_stack_here(void);
@@ -127,6 +129,7 @@ void resize_stack(struct stack *, unsigned short);
 struct stack *find_stack(int);
 struct stack *find_stack_xy(unsigned short, unsigned short);
 void resize_client(struct client *);
+void resize_clients(struct stack *);
 void toggle_stacks_maxwidth_override(void);
 void toggle_hide_other_stacks(void);
 void toggle_sticky_stack(void);
@@ -155,6 +158,8 @@ struct client *next_client(struct client *);
 struct client *prev_client(struct client *);
 char *client_name(struct client *);
 struct client *find_top_client(struct stack *);
+void unmap_clients(struct stack *);
+void map_clients(struct stack *);
 void update_client_name(struct client *);
 
 unsigned short display_height(void);

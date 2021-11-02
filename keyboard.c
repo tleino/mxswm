@@ -115,7 +115,7 @@ static const struct binding binding[] = {
 	},
 	{
 		XK_h, Mod4Mask,
-		NULL, toggle_hide_other_stacks
+		toggle_hide_other_stacks, NULL
 	},
 	{
 		XK_s, Mod4Mask,

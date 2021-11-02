@@ -36,6 +36,8 @@ static struct stack *next_stack(struct stack *);
 static struct stack *prev_stack(struct stack *);
 static struct stack *first_stack(void);
 static struct stack *last_stack(void);
+static void hide_stack(struct stack *);
+static void show_stack(struct stack *);
 
 static int maxwidth_override;
 
@@ -49,6 +51,38 @@ next_stack(struct stack *np)
 		np = np->next;
 
 	return np;
+}
+
+struct stack *
+have_stack(Window window)
+{
+	struct stack *np;
+
+	for (np = _head; np != NULL; np = np->next) {
+		if (np->window != window)
+			continue;
+
+		return np;
+	}
+
+	return NULL;
+}
+
+static void
+hide_stack(struct stack *stack)
+{
+	unmap_clients(stack);
+	if (stack->mapped)
+		XUnmapWindow(display(), stack->window);
+}
+
+static void
+show_stack(struct stack *stack)
+{
+	map_clients(stack);
+	resize_clients(stack);
+	if (!stack->mapped)
+		XMapWindow(display(), stack->window);
 }
 
 static struct stack *
@@ -168,6 +202,8 @@ toggle_hide_other_stacks()
 {
 	struct stack *np;
 
+	TRACE_LOG("*");
+
 	for (np = _head; np != NULL; np = np->next) {
 		if (np->sticky)
 			np->hidden = 0;
@@ -178,6 +214,12 @@ toggle_hide_other_stacks()
 		current_stack()->hidden = 0;
 	else
 		current_stack()->hidden ^= 1;
+
+	for (np = _head; np != NULL; np = np->next)
+		if (np->hidden)
+			hide_stack(np);
+		else
+			show_stack(np);
 
 	resize_stacks();
 }
@@ -264,6 +306,12 @@ draw_stack(struct stack *stack)
 	dpy = display();
 	client = find_top_client(stack);
 
+	if (!stack->mapped)
+		XMapWindow(dpy, stack->window);
+
+	if (client != NULL && !client->mapped)
+		XMapWindow(dpy, client->window);
+
 	XClearWindow(dpy, stack->window);
 	XRaiseWindow(dpy, stack->window);
 	if (client != NULL && client->name != NULL) {
@@ -293,7 +341,7 @@ draw_stacks()
 {
 	struct stack *np;
 
-	for (np = _head; np != NULL; np = np->next)
+	for (np = first_stack(); np != NULL; np = next_stack(np))
 		draw_stack(np);
 }
 
@@ -326,7 +374,7 @@ resize_stack(struct stack *stack, unsigned short width)
 
 	XMoveWindow(dpy, stack->window, stack->x, 0);
 	XResizeWindow(dpy, stack->window, stack->width, BORDERWIDTH);
-	resize_client(find_top_client(stack));
+	resize_clients(stack);
 	draw_stack(stack);
 }
 
@@ -430,9 +478,8 @@ struct stack *
 add_stack(struct stack *after)
 {
 	struct stack *stack;
-	struct client *client;
 
-	stack = malloc(sizeof(struct stack));
+	stack = calloc(1, sizeof(struct stack));
 	if (stack == NULL)
 		return NULL;
 
@@ -471,10 +518,7 @@ add_stack(struct stack *after)
 
 	dump_stacks();
 
-	client = NULL;
-	while ((client = next_client(client)) != NULL)
-		resize_client(client);
-
+	resize_clients(stack);
 	focus_stack(stack);
 
 	return stack;

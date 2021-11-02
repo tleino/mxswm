@@ -151,9 +151,12 @@ handle_event(XEvent *event)
 			TRACE_LOG("mapped was %d", client->mapped);
 			client->mapped = (event->type == MapNotify) ? 1 : 0;
 			TRACE_LOG("mapped is now %d", client->mapped);
-			if (client->mapped)
+			if (client->mapped && client->stack != NULL &&
+			    client->stack->mapped)
 				focus_client(client, client->stack);
-		} else
+		} else if ((stack = have_stack(window)) != NULL)
+			stack->mapped = (event->type == MapNotify) ? 1 : 0;
+		else	
 			TRACE_LOG("ignore");
 		break;
 	case DestroyNotify:
