@@ -195,6 +195,7 @@ void
 toggle_sticky_stack()
 {
 	current_stack()->sticky ^= 1;
+	draw_stack(current_stack());
 }
 
 void
@@ -326,8 +327,10 @@ draw_stack(struct stack *stack)
 		y = (0 * font_height) + font_y;
 
 		if (_highlight)
-			snprintf(buf, sizeof(buf), "stack %d",
-			    stack->num);
+			snprintf(buf, sizeof(buf), "stack %d (%c%c)",
+			    stack->num,
+			    stack->sticky ? 's' : '-',
+			    stack->prefer_width ? 'w' : '-');
 		else
 			snprintf(buf, sizeof(buf), "%s", client->name);
 
