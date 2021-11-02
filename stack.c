@@ -32,8 +32,68 @@ static int _highlight;
 
 static void create_stack_titlebar(struct stack *);
 static int stack_width(int, int, int);
+static struct stack *next_stack(struct stack *);
+static struct stack *prev_stack(struct stack *);
+static struct stack *first_stack(void);
+static struct stack *last_stack(void);
 
 static int maxwidth_override;
+
+static struct stack *
+next_stack(struct stack *np)
+{
+	assert(np != NULL);
+
+	np = np->next;
+	while (np && np->hidden)
+		np = np->next;
+
+	return np;
+}
+
+static struct stack *
+first_stack()
+{
+	struct stack *np;
+
+	np = _head;
+	assert(np != NULL);
+
+	while (np && np->hidden)
+		np = np->next;
+
+	assert(np != NULL);
+	return np;
+}
+
+static struct stack *
+last_stack()
+{
+	struct stack *np;
+
+	np = _head;
+	assert(np != NULL);
+
+	while (np->next)
+		np = np->next;
+	while (np && np->hidden)
+		np = np->prev;
+
+	assert(np != NULL);
+	return np;
+}
+
+static struct stack *
+prev_stack(struct stack *np)
+{
+	assert(np != NULL);
+
+	np = np->prev;
+	while (np && np->hidden)
+		np = np->prev;
+
+	return np;
+}
 
 void
 move_stack(int dir)
@@ -94,6 +154,31 @@ void
 toggle_stacks_maxwidth_override()
 {
 	maxwidth_override ^= 1;
+	resize_stacks();
+}
+
+void
+toggle_sticky_stack()
+{
+	current_stack()->sticky ^= 1;
+}
+
+void
+toggle_hide_other_stacks()
+{
+	struct stack *np;
+
+	for (np = _head; np != NULL; np = np->next) {
+		if (np->sticky)
+			np->hidden = 0;
+		else
+			np->hidden ^= 1;
+	}
+	if (current_stack()->sticky)
+		current_stack()->hidden = 0;
+	else
+		current_stack()->hidden ^= 1;
+
 	resize_stacks();
 }
 
@@ -274,7 +359,7 @@ resize_stacks()
 	size_t n, n_want_surplus;
 
 	n = 0;
-	for (np = _head; np != NULL; np = np->next)
+	for (np = first_stack(); np != NULL; np = next_stack(np))
 		n++;
 
 	/*
@@ -291,7 +376,7 @@ resize_stacks()
 	 */
 	surplus = 0;
 	n_want_surplus = 0;
-	for (np = _head; np != NULL; np = np->next) {
+	for (np = first_stack(); np != NULL; np = next_stack(np)) {
 		if (np->prefer_width > 0) {
 			width = stack_width(avg, np->prefer_width, 0);
 			surplus += (stack_width(avg, 0, 0) - width);
@@ -305,7 +390,7 @@ resize_stacks()
 	 * Calculate total for finding out how to center the stacks.
 	 */
 	total = 0;
-	for (np = _head; np != NULL; np = np->next) {
+	for (np = first_stack(); np != NULL; np = next_stack(np)) {
 		width = stack_width(avg, np->prefer_width, surplus);
 		total += width;
 	}
@@ -315,7 +400,7 @@ resize_stacks()
 	 * Resize and move.
 	 */
 	x = BORDERWIDTH + (total_surplus/2);
-	for (np = _head; np != NULL; np = np->next) {
+	for (np = first_stack(); np != NULL; np = next_stack(np)) {
 		np->x = x;
 		width = stack_width(avg, np->prefer_width, surplus);
 		resize_stack(np, width - BORDERWIDTH);
@@ -463,7 +548,7 @@ focus_stack_forward()
 	was_visible = is_menu_visible();
 
 	sp = current_stack();
-	focus_stack(sp->next != NULL ? sp->next : _head);
+	focus_stack(next_stack(sp) != NULL ? next_stack(sp) : first_stack());
 
 	if (was_visible) {
 		hide_menu();
@@ -474,22 +559,13 @@ focus_stack_forward()
 void
 focus_stack_backward()
 {
-	struct stack *sp, *np;
+	struct stack *sp;
 	int was_visible;
 
 	was_visible = is_menu_visible();
 
 	sp = current_stack();
-	if (sp->prev != NULL)
-		focus_stack(sp->prev);
-	else {
-		np = sp;
-		while (np->next != NULL)
-			np = np->next;
-		assert(np != NULL);
-
-		focus_stack(np);
-	}
+	focus_stack(prev_stack(sp) != NULL ? prev_stack(sp) : last_stack());
 
 	if (was_visible) {
 		hide_menu();

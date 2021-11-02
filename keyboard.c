@@ -113,6 +113,14 @@ static const struct binding binding[] = {
 		XK_F3, 0,
 		NULL, toggle_stacks_maxwidth_override
 	},
+	{
+		XK_h, Mod4Mask,
+		NULL, toggle_hide_other_stacks
+	},
+	{
+		XK_s, Mod4Mask,
+		NULL, toggle_sticky_stack
+	},
 };
 
 static int menu;

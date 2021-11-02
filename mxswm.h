@@ -93,6 +93,8 @@ struct stack {
 	Window window;
 	int maxwidth_override;
 	int prefer_width;
+	int hidden;
+	int sticky;
 };
 
 struct client {
@@ -126,6 +128,8 @@ struct stack *find_stack(int);
 struct stack *find_stack_xy(unsigned short, unsigned short);
 void resize_client(struct client *);
 void toggle_stacks_maxwidth_override(void);
+void toggle_hide_other_stacks(void);
+void toggle_sticky_stack(void);
 void highlight_stacks(int);
 void draw_stacks(void);
 void move_stack(int);
