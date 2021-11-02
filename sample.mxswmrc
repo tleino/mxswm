@@ -1,3 +1,5 @@
 add stack
 add stack
 stack 3 width 200
+stack 3 sticky 1
+

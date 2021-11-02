@@ -67,7 +67,7 @@ run_ctl_lines()
 void
 run_ctl_line(const char *str)
 {
-	int stackno, width;
+	int stackno, width, sticky;
 	struct stack *stack;
 
 	TRACE_LOG("\"%s\"", str);
@@ -77,6 +77,10 @@ run_ctl_line(const char *str)
 			stack->prefer_width = width;
 		resize_stacks();
 		focus_stack(stack);
+	} else if (sscanf(str, "stack %d sticky %d", &stackno, &sticky) == 2) {
+		stack = find_stack(stackno);
+		if (stack != NULL)
+			stack->sticky = sticky ? 1 : 0;
 	} else if (strncmp(str, "add stack", strlen("add stack")) == 0) {
 		add_stack(current_stack());
 	}
