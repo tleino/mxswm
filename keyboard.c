@@ -141,6 +141,7 @@ static void
 win_on()
 {
 	highlight_stacks(1);
+	open_menu();
 }
 
 void

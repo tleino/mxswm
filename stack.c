@@ -223,6 +223,7 @@ toggle_hide_other_stacks()
 			show_stack(np);
 
 	resize_stacks();
+	draw_menu();
 }
 
 struct stack *
