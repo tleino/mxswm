@@ -114,7 +114,7 @@ have_client(Window window)
 }
 
 struct client *
-next_client(struct client *client)
+next_client(struct client *client, struct stack *stack)
 {
 	struct client *np;
 
@@ -125,23 +125,23 @@ next_client(struct client *client)
 		np = np->next;
 
 	for (; np != NULL; np = np->next)
-		if (np->mapped)
+		if (np->mapped && (stack == NULL || np->stack == stack))
 			break;
 
 	return np;
 }
 
 struct client *
-prev_client(struct client *client)
+prev_client(struct client *client, struct stack *stack)
 {
 	struct client *np;
 
 	np = client;
 	if (np == NULL)
-		return next_client(NULL);
+		return next_client(NULL, stack);
 
 	for (np = np->prev; np != NULL; np = np->prev)
-		if (np->mapped)
+		if (np->mapped && (stack == NULL || np->stack == stack))
 			break;
 
 	return np;
@@ -221,6 +221,20 @@ resize_client(struct client *client)
 	window = client->window;
 	XMoveWindow(dpy, window, STACK_X(stack), STACK_Y(stack) + BORDERWIDTH);
 	XResizeWindow(dpy, window, STACK_WIDTH(stack), STACK_HEIGHT(stack));
+}
+
+size_t
+count_clients(struct stack *stack)
+{
+	struct client *np;
+	size_t n;
+
+	n = 0;
+	for (np = _head; np != NULL; np = np->next)
+		if (np->stack == stack && np->mapped)
+			n++;
+
+	return n;
 }
 
 void

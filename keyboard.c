@@ -154,8 +154,10 @@ close_menu()
 void
 open_menu()
 {
-	menu = 1;
-	show_menu();
+	if (count_clients(current_stack()) > 0) {
+		menu = 1;
+		show_menu();
+	}
 }
 
 void

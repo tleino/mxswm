@@ -302,11 +302,14 @@ draw_stack(struct stack *stack)
 	Display *dpy;
 	struct client *client;
 	int x, y;
-	int font_width, font_height, font_x, font_y;
-	char buf[1024];
+	int font_width, font_height, font_x, font_y, avail;
+	char buf[1024], num[10];
+	size_t nclients;
 
 	dpy = display();
 	client = find_top_client(stack);
+
+	nclients = count_clients(stack);
 
 	if (!stack->mapped)
 		XMapWindow(dpy, stack->window);
@@ -321,6 +324,7 @@ draw_stack(struct stack *stack)
 	font_y = _fs->max_bounds.ascent;
 	font_width = _fs->max_bounds.rbearing - _fs->min_bounds.lbearing;
 	font_height = _fs->max_bounds.ascent + _fs->max_bounds.descent;
+	avail = (stack->width - font_x) / font_width;
 
 	x = font_x;
 	y = (0 * font_height) + font_y;
@@ -335,7 +339,19 @@ draw_stack(struct stack *stack)
 	else
 		buf[0] = '\0';
 
-	XDrawString(display(), stack->window, _gc, x, y, buf, strlen(buf));
+	if (!_highlight && nclients > 1) {
+		snprintf(num, sizeof(num), "+%zu", nclients);
+		XDrawString(display(), stack->window, _gc, x, y, buf,
+		    MIN(avail-strlen(num), strlen(buf)));
+
+		if (avail >= strlen(num))
+			XDrawString(display(), stack->window, _gc,
+			    x + (avail-strlen(num)) *
+			    font_width, y, num, strlen(num));
+	} else {
+		XDrawString(display(), stack->window, _gc, x, y, buf,
+		    strlen(buf));
+	}
 }
 
 void
@@ -553,7 +569,7 @@ remove_stack(struct stack *stack)
 	resize_stacks();
 
 	client = NULL;
-	while ((client = next_client(client)) != NULL) {
+	while ((client = next_client(client, NULL)) != NULL) {
 		if (CLIENT_STACK(client) == stack) {
 			CLIENT_STACK(client) = _focus;
 		}

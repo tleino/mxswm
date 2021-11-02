@@ -50,10 +50,10 @@ create_menu()
 	XSetWindowAttributes a;
 	unsigned long v;
 
-	w = display_width() / 2;
-	h = display_height() / 2;
-	x = w / 2;
-	y = h / 2;
+	w = 1;
+	h = 1;
+	x = 0;
+	y = 0;
 	v = CWBackPixel | CWOverrideRedirect;
 	a.background_pixel = TITLEBAR_FOCUS_COLOR;
 	a.override_redirect = True;
@@ -153,7 +153,7 @@ draw_menu()
 	char buf[256];
 	int font_x, font_y, font_width, font_height;
 	int row;
-	int nclients;
+	size_t nclients;
 
 	TRACE_LOG("visible=%d", _menu_visible);
 
@@ -189,9 +189,11 @@ draw_menu()
 	}
 
 	client = NULL;
-	nclients = 0;
-	while ((client = next_client(client)) != NULL) {
-		nclients++;
+	nclients = count_clients(stack);
+
+	if (nclients == 0) {
+		close_menu();
+		return;
 	}
 
 	font_x = _fs->min_bounds.lbearing;
@@ -211,24 +213,8 @@ draw_menu()
 	x = 40;
 	y = 40;
 	row = 0;
-	while ((client = next_client(client)) != NULL) {
-#if 0
-		if (client->stack != current_stack())
-			continue;
-#endif
-
+	while ((client = next_client(client, stack)) != NULL) {
 		name = client_name(client);
-
-#if 0
-		if (client == current_client())
-			c = '*';
-		else if (client->stack != current_client()->stack &&
-		    find_top_client(client->stack) == client)
-			c = '^';
-		else
-			c = ' ';
-#endif
-
 		if (name == NULL)
 			name = "???";
 		if (CLIENT_STACK(client) == stack)
@@ -289,7 +275,7 @@ focus_menu_backward()
 	if (!_menu_visible)
 		return;
 
-	current = prev_client(current);
+	current = prev_client(current, current_stack());
 	if (current == NULL) {
 		hide_menu();
 		return;
@@ -304,7 +290,7 @@ focus_menu_forward()
 		show_menu();
 		return;
 	}
-	if (next_client(current) != NULL)
-		current = next_client(current);
+	if (next_client(current, current_stack()) != NULL)
+		current = next_client(current, current_stack());
 	draw_menu();
 }
