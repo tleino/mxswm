@@ -41,8 +41,6 @@ Feature TODO
  - Runtime configuration of max stack width (useful for setting sane
    maximums, or for setting the width for 80 column terminals).
 
- - Temporarily hide other stacks.
-
 Default key bindings
 ====================
 
