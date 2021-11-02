@@ -91,17 +91,18 @@ int
 manageable(Window w, int *mapped)
 {
 	XWindowAttributes wa;
-	int redirectable;
+	int redirectable, output_window;
 	Display *d = display();
 
 	if (!XGetWindowAttributes(d, w, &wa)) {
 		warnx("XGetWindowAttributes failed for %lx", w);
 		return 0;
 	}
-	*mapped = (wa.map_state != IsUnmapped);
+	*mapped = (wa.map_state == IsViewable);
 	redirectable = (wa.override_redirect != True);
+	output_window = (wa.class != InputOnly);
 
-	return redirectable;
+	return redirectable && output_window;
 }
 
 static void
