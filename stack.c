@@ -181,7 +181,10 @@ void
 highlight_stacks(int i)
 {
 	_highlight = i;
-	draw_stacks();
+	if (_highlight)
+		draw_stack(current_stack());
+	else
+		draw_stacks();
 }
 
 void
