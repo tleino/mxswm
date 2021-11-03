@@ -62,7 +62,7 @@ create_global_menu()
 	x = w/2;
 	y = display_height() / 2 - (h/2);
 	v = CWBackPixel | CWOverrideRedirect;
-	a.background_pixel = TITLEBAR_FOCUS_COLOR;
+	a.background_pixel = query_color(COLOR_TITLE_BG_FOCUS).pixel;
 	a.override_redirect = True;
 	_global_menu = XCreateWindow(display(),
 	    DefaultRootWindow(display()),
@@ -85,7 +85,7 @@ create_menu()
 	x = 0;
 	y = 0;
 	v = CWBackPixel | CWOverrideRedirect;
-	a.background_pixel = TITLEBAR_FOCUS_COLOR;
+	a.background_pixel = query_color(COLOR_TITLE_BG_FOCUS).pixel;
 	a.override_redirect = True;
 	_menu = XCreateWindow(display(),
 	    DefaultRootWindow(display()),
@@ -201,17 +201,17 @@ ensure_font()
 	}
 
 	if (_gc == 0) {
-		v.foreground = WhitePixel(display(), DefaultScreen(display()));
+		v.foreground = query_color(COLOR_MENU_FG_NORMAL).pixel;
 		v.font = _fs->fid;
 		_gc = XCreateGC(display(), DefaultRootWindow(display()),
 		    GCForeground | GCFont, &v);
 
-		v.foreground = 434838438;
+		v.foreground = query_color(COLOR_MENU_FG_FOCUS).pixel;
 		v.font = _fs->fid;
 		_focus_gc = XCreateGC(display(), DefaultRootWindow(display()),
 		    GCForeground | GCFont, &v);
 
-		v.foreground = 6748778438;
+		v.foreground = query_color(COLOR_MENU_FG_HIGHLIGHT).pixel;
 		v.font = _fs->fid;
 		_highlight_gc = XCreateGC(display(),
 		    DefaultRootWindow(display()), GCForeground | GCFont, &v);

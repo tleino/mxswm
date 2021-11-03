@@ -53,6 +53,16 @@ Window current_window(void);
 #define MAX(_x, _y) ((_x) > (_y) ? (_x) : (_y))
 #endif
 
+enum
+{
+	COLOR_TITLE_BG_NORMAL,
+	COLOR_TITLE_BG_FOCUS,
+	COLOR_MENU_FG_NORMAL,
+	COLOR_MENU_FG_FOCUS,
+	COLOR_MENU_FG_HIGHLIGHT,
+	NUM_COLOR
+};
+
 /*
  * These are sane defaults for a 2560x1440 screen.
  * Modify freely locally.
@@ -73,12 +83,11 @@ Window current_window(void);
 #define MAXWIDTH (FONTWIDTH * 80)
 #endif
 
-/*
- * TODO: These are purely random placeholder colors,
- *       replace them with XAllocNamedColor or similar.
- */
-#define TITLEBAR_FOCUS_COLOR 434545456
-#define TITLEBAR_NORMAL_COLOR 5485488
+#define COLOR_NAME_TITLE_BG_NORMAL	"gray"
+#define COLOR_NAME_TITLE_BG_FOCUS	"cornflower blue"
+#define COLOR_NAME_MENU_FG_NORMAL	"white"
+#define COLOR_NAME_MENU_FG_FOCUS	"purple"
+#define COLOR_NAME_MENU_FG_HIGHLIGHT	"blue"
 
 struct client;
 
@@ -205,6 +214,8 @@ void highlight_menu(int);
 void do_keyaction(XKeyEvent *);
 void unbind_keys();
 void bind_keys();
+
+XColor query_color(int);
 
 Time current_event_timestamp(void);
 

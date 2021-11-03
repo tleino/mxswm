@@ -289,7 +289,7 @@ create_stack_titlebar(struct stack *stack)
 	x = BORDERWIDTH;
 	y = 0;
 	v = CWBackPixel | CWOverrideRedirect;
-	a.background_pixel = TITLEBAR_NORMAL_COLOR;
+	a.background_pixel = query_color(COLOR_TITLE_BG_NORMAL).pixel;
 	a.override_redirect = True;
 	stack->window = XCreateWindow(dpy,
 	    DefaultRootWindow(dpy),
@@ -601,11 +601,13 @@ focus_stack(struct stack *stack)
 	focus_client(find_top_client(stack), stack);
 
 	if (prev != NULL) {
-		XSetWindowBackground(display(), prev->window, TITLEBAR_NORMAL_COLOR);
+		XSetWindowBackground(display(), prev->window,
+		    query_color(COLOR_TITLE_BG_NORMAL).pixel);
 		draw_stack(prev);
 	}
 
-	XSetWindowBackground(display(), stack->window, TITLEBAR_FOCUS_COLOR);
+	XSetWindowBackground(display(), stack->window,
+	    query_color(COLOR_TITLE_BG_FOCUS).pixel);
 	draw_stack(stack);
 }
 
