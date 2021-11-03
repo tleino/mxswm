@@ -102,6 +102,10 @@ struct client {
 	Window window;
 	char *name;
 	int mapped;
+#define CF_HAS_TAKEFOCUS (1 << 0)
+#define CF_HAS_DELWIN (1 << 1)
+#define CF_FOCUS_WHEN_MAPPED (1 << 2)
+	int flags;
 	struct stack *stack;
 	struct client *next;
 	struct client *prev;
@@ -137,6 +141,10 @@ void toggle_sticky_stack(void);
 void highlight_stacks(int);
 void draw_stacks(void);
 void move_stack(int);
+
+void read_protocols(struct client *);
+void send_delete_window(struct client *);
+void send_take_focus(struct client *);
 
 #if TRACE
 void dump_stack(struct stack *);
@@ -197,6 +205,8 @@ void highlight_menu(int);
 void do_keyaction(XKeyEvent *);
 void unbind_keys();
 void bind_keys();
+
+Time current_event_timestamp(void);
 
 #if WANT_CTLSOCKET
 int listen_ctlsocket(void);

@@ -290,8 +290,9 @@ draw_menu()
 	unsigned short x, y;
 	char *name;
 	struct stack *stack = current_stack();
-	char buf[256];
+	char buf[256], flags[10];
 	int row;
+	int avail;
 	size_t nclients;
 
 	TRACE_LOG("visible=%d", _menu_visible);
@@ -313,6 +314,8 @@ draw_menu()
 
 	XRaiseWindow(display(), _menu);
 
+	avail = (STACK_WIDTH(stack) - font_x) / font_width;
+
 	client = NULL;
 	row = 0;
 	while ((client = next_client(client, stack)) != NULL) {
@@ -321,6 +324,13 @@ draw_menu()
 			name = "???";
 
 		snprintf(buf, sizeof(buf), "%s", name);
+
+		snprintf(flags, sizeof(flags), "%d%c%c%c%c",
+		    client->stack ? client->stack->num : 0,
+		    (current_client() == client) ? '*' : '-',
+		    client->flags & CF_HAS_TAKEFOCUS ? 't' : '-',
+		    client->flags & CF_HAS_DELWIN ? 'd' : '-',
+		    client->mapped ? 'm' : '-');
 
 		x = font_x;
 		y = (row * font_height) + font_y;
@@ -335,6 +345,11 @@ draw_menu()
 		} else
 			XDrawString(display(), _menu, _gc, x, y, buf,
 			    strlen(buf));
+
+		if (avail >= strlen(flags))
+			XDrawString(display(), _menu, _gc,
+			    x + (avail-strlen(flags)) * font_width,
+			    y, flags, strlen(flags));
 		row++;
 	}
 }

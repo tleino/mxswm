@@ -51,7 +51,7 @@ add_client(Window window, struct client *after, int mapped)
 	struct client *client;
 
 	TRACE_LOG("%lx mapped=%d", window, mapped);
-	client = malloc(sizeof(struct client));
+	client = calloc(1, sizeof(struct client));
 	if (client == NULL)
 		return NULL;
 
@@ -80,15 +80,18 @@ add_client(Window window, struct client *after, int mapped)
 			_head->next->prev = _head;
 	}
 
+	read_protocols(client);
+
+	XSelectInput(display(), window, PropertyChangeMask);
+
 	if (mapped) {
 		XSetWindowBorderWidth(display(), window, 0);
-		XSelectInput(display(), window, PropertyChangeMask);
-	}
+		focus_client(client, NULL);
+		draw_menu();
+	} else
+		client->flags |= CF_FOCUS_WHEN_MAPPED;
 
 	update_client_name(client);
-	focus_client(client, NULL);
-	draw_menu();
-
 	return client;
 }
 
@@ -272,10 +275,17 @@ focus_client(struct client *client, struct stack *stack)
 	_focus = client;
 	window = client->window;
 
+	if (client->flags & CF_HAS_TAKEFOCUS) {
+		TRACE_LOG("Sending TAKEFOCUS");
+		send_take_focus(client);
+	} else {
+		TRACE_LOG("Normal input focus");
+		XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
+	}
+
 	resize_client(client);
 
 	XRaiseWindow(dpy, window);
-	XSetInputFocus(dpy, window, RevertToPointerRoot, CurrentTime);
 
 	draw_stack(client->stack);
 }

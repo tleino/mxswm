@@ -13,7 +13,8 @@ mandir = $(datarootdir)/man
 INSTALL ?= install
 INSTALLFLAGS ?=
 
-SRCS=mxswm.c stack.c client.c event.c menu.c keyboard.c ctlsocket.c ctl.c
+SRCS=mxswm.c stack.c client.c event.c menu.c keyboard.c ctlsocket.c ctl.c \
+	icccm.c
 PROG=mxswm
 
 OBJS=$(SRCS:.c=.o)

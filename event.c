@@ -21,6 +21,14 @@
 
 static Window window;
 
+static Time timestamp;
+
+Time
+current_event_timestamp()
+{
+	return timestamp;
+}
+
 #ifdef TRACE
 static XEvent *_current_event;
 
@@ -108,10 +116,12 @@ handle_event(XEvent *event)
 #ifdef TRACE
 	_current_event = event;
 #endif
+	timestamp = CurrentTime;
 	window = 0;
 	switch (event->type) {
 	case ButtonPress:
 		window = event->xbutton.window;
+		timestamp = event->xbutton.time;
 		stack = find_stack_xy(event->xbutton.x, event->xbutton.y);
 
 		/*
@@ -130,6 +140,7 @@ handle_event(XEvent *event)
 		break;
 	case KeyRelease:
 	case KeyPress:
+		timestamp = event->xkey.time;
 		do_keyaction(&(event->xkey));
 		break;
 	case PropertyNotify:
@@ -151,9 +162,11 @@ handle_event(XEvent *event)
 			TRACE_LOG("mapped was %d", client->mapped);
 			client->mapped = (event->type == MapNotify) ? 1 : 0;
 			TRACE_LOG("mapped is now %d", client->mapped);
-			if (client->mapped && client->stack != NULL &&
-			    client->stack->mapped)
-				focus_client(client, client->stack);
+			if (client->mapped &&
+			    client->flags & CF_FOCUS_WHEN_MAPPED) {
+				client->flags &= ~CF_FOCUS_WHEN_MAPPED;
+				focus_client(client, current_stack());
+			}
 		} else if ((stack = have_stack(window)) != NULL)
 			stack->mapped = (event->type == MapNotify) ? 1 : 0;
 		else	
@@ -186,9 +199,13 @@ handle_event(XEvent *event)
 		    event->xcreatewindow.override_redirect);
 		if (event->xcreatewindow.override_redirect == True)
 			TRACE_LOG("ignore");
-		else
-			if (add_client(window, NULL, 0) == NULL)
+		else {
+			client = add_client(window, NULL, 0);
+			if (client == NULL)
 				warn("add_client");
+			else
+				XSetWindowBorderWidth(display(), window, 0);
+		}
 		break;
 	default:
 		TRACE_LOG("unhandled");
