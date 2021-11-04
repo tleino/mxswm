@@ -84,4 +84,11 @@ run_ctl_line(const char *str)
 	} else if (strncmp(str, "add stack", strlen("add stack")) == 0) {
 		add_stack(current_stack());
 	}
+#ifdef TRACE
+	if (strncmp(str, "stacks", strlen("stacks")) == 0) {
+		dump_stacks();
+	} else if (strncmp(str, "clients", strlen("clients")) == 0) {
+		dump_clients();
+	}
+#endif
 }
