@@ -129,50 +129,47 @@ prev_stack(struct stack *np)
 	return np;
 }
 
+static void
+stack_copy(struct stack *dst, struct stack *src)
+{
+	struct stack *prev, *next;
+	struct client *np;
+
+	prev = dst->prev;
+	next = dst->next;
+
+	memcpy(dst, src, sizeof(struct stack));
+
+	np = NULL;
+	while ((np = next_client(np, src)) != NULL)
+		CLIENT_STACK(np) = dst;
+
+	dst->prev = prev;
+	dst->next = next;
+}
+
 void
 move_stack(int dir)
 {
-	struct stack *stack;
-	struct stack *tmp;
+	struct stack *stack, *target;
+	struct stack tmp;
 
 	stack = current_stack();
 
-	switch (dir) {
-	case -1:
-		if (stack == _head || stack->prev == NULL)
-			return;
+	target = (dir == -1) ? prev_stack(stack) : next_stack(stack);
+	if (target == NULL)
+		target = (dir == -1) ? last_stack() : first_stack();
+	assert(target != NULL);
 
-		tmp = stack->prev;
-		if (stack->next != NULL)
-			stack->next->prev = tmp;
-		if (tmp->prev != NULL)
-			tmp->prev->next = stack;
-		tmp->next = stack->next;
-		stack->next = tmp;
-		stack->prev = tmp->prev;
-		tmp->prev = stack;
-		if (tmp == _head)
-			_head = stack;
-		break;
-	case 1:
-		if (stack->next == NULL)
-			return;
+	if (target == stack)
+		return;
 
-		tmp = stack->next;
-		if (stack->prev != NULL)
-			stack->prev->next = tmp;
-		if (tmp->prev != NULL)
-			tmp->prev->next = tmp;
-		tmp->prev = stack->prev;
-		stack->prev = tmp;
-		stack->next = tmp->next;
-		tmp->next = stack;
-		if (stack == _head)
-			_head = tmp;
-		break;
-	default:
-		assert(0);
-	}
+	stack_copy(&tmp, target);
+	stack_copy(target, stack);
+	stack_copy(stack, &tmp);
+
+	focus_stack(target);
+
 	resize_stacks();
 	draw_stacks();
 }
