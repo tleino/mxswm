@@ -425,10 +425,11 @@ current_client()
 void
 dump_client(struct client *client)
 {
-	TRACE_LOG("0x%08lx (%c%c) %s", client->window,
+	TRACE_LOG("0x%08lx (%c%c) %s (stack %llu)", client->window,
 	    (client == _focus) ? 'f' : '-',
 	    (client->mapped) ? 'm' : '-',
-	    client->name != NULL ? client->name : "<no name>");
+	    client->name != NULL ? client->name : "<no name>",
+	    (unsigned long long) client->stack);
 }
 
 void
