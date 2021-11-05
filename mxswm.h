@@ -29,16 +29,19 @@ Window current_window(void);
 
 #define TRACE_LOG(...)  \
 	do { \
-		fprintf(stderr, "%-16s 0x%08lx %-16s ", \
-		    current_event(), current_window(), __FUNCTION__); \
+		fprintf(stderr, "%-16s 0x%08lx %-16s %-16s ", \
+		    current_event(), current_window(), \
+		    event_client() ? event_client()->name : \
+		    "", __FUNCTION__); \
 		fprintf(stderr, __VA_ARGS__); \
 		fprintf(stderr, "\n"); \
 	} while(0)
-
+#define TRACE_SET_CLIENT(client) set_event_client(client)
 #define EVENT_STR(event) str_event(event)
 #else
 #define TRACE_LOG(...)   ((void) 0)
 #define EVENT_STR(...)   ((void) 0)
+#define TRACE_SET_CLIENT(...)	((void) 0)
 #endif
 
 #ifndef ARRLEN
@@ -218,6 +221,11 @@ void bind_keys();
 XColor query_color(int);
 
 Time current_event_timestamp(void);
+
+#ifdef TRACE
+struct client *event_client();
+void set_event_client(struct client *);
+#endif
 
 #if WANT_CTLSOCKET
 int listen_ctlsocket(void);

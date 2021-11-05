@@ -23,6 +23,8 @@ static Window window;
 
 static Time timestamp;
 
+static struct client *client;
+
 Time
 current_event_timestamp()
 {
@@ -36,6 +38,18 @@ const char *
 current_event()
 {
 	return str_event(_current_event);
+}
+
+struct client *
+event_client()
+{
+	return client;
+}
+
+void
+set_event_client(struct client *_client)
+{
+	client = _client;
 }
 
 Window
@@ -110,7 +124,6 @@ str_event(XEvent *event)
 int
 handle_event(XEvent *event)
 {
-	struct client *client;
 	struct stack *stack;
 
 #ifdef TRACE
@@ -214,6 +227,7 @@ handle_event(XEvent *event)
 #ifdef TRACE
 	_current_event = 0;
 	window = 0;
+	client = NULL;
 #endif
 	return 1;
 }

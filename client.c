@@ -201,8 +201,11 @@ remove_client(struct client *client)
 	_focus = find_top_client(client->stack);
 	focus_client(_focus, client->stack);
 
-	if (client->name != NULL)
+	TRACE_SET_CLIENT(NULL);
+	if (client->name != NULL) {
 		free(client->name);
+		client->name = NULL;
+	}
 	free(client);
 
 	TRACE_LOG("draw menu");
