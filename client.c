@@ -19,6 +19,7 @@
 #include "mxswm.h"
 
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 #include <assert.h>
 #include <err.h>
 #include <stdlib.h>
@@ -26,6 +27,32 @@
 
 static struct client *_head;
 static struct client *_focus;
+
+static void try_utf8_name(struct client *);
+
+static void
+try_utf8_name(struct client *client)
+{
+	Atom u8name, u8type, type;
+	unsigned char *name;
+	int form;
+	unsigned long remain, len;
+
+	u8type = XInternAtom(display(), "UTF8_STRING", False);
+	u8name = XInternAtom(display(), "_NET_WM_NAME", False);
+	name = NULL;
+
+	if (XGetWindowProperty(display(), client->window,
+	    u8name, 0, 1024, False, u8type, &type, &form,
+	    &len, &remain, &name) == Success) {
+		TRACE_LOG("_NET_WM_NAME");
+		if (name != NULL) {
+			if (client->name != NULL)
+				free(client->name);
+			client->name = strdup(name);
+		}
+	}
+}
 
 void
 update_client_name(struct client *client)
@@ -42,6 +69,13 @@ update_client_name(struct client *client)
 			memcpy(client->name, text.value, text.nitems);
 			client->name[text.nitems] = 0;
 		}
+	}
+
+	try_utf8_name(client);
+
+	if (client->name != NULL && client->name[0] == '\0') {
+		free(client->name);
+		client->name = strdup("(no name)");
 	}
 }
 
