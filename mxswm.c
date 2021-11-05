@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 	Display *dpy;
 	int ctlfd;
 
-	setlocale(LC_ALL, "");
+	setlocale(LC_CTYPE, "en_US.UTF-8");
 
 	dpy = display();
 	select_root_events(dpy);
