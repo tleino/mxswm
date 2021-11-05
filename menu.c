@@ -24,8 +24,9 @@
 static Window _menu;
 static Window _global_menu;
 static GC _gc, _focus_gc, _highlight_gc;
-static struct client *current;
-static struct client *global_current;
+
+static struct client *currentp;
+
 static XFontStruct *_fs;
 static int _menu_visible;
 static int _global_menu_visible;
@@ -34,6 +35,24 @@ static int font_x, font_y, font_width, font_height;
 
 static void move_menu_item(int);
 static void ensure_font(void);
+
+static struct client *
+current(struct stack *stack)
+{
+	if (currentp == NULL) {
+		currentp = next_client(NULL, stack);
+		return currentp;
+	}
+
+	while (currentp != NULL &&
+	    ((stack != NULL && currentp->stack != stack) || !currentp->mapped))
+		currentp = next_client(currentp, stack);
+
+	if (currentp == NULL)
+		currentp = next_client(NULL, stack);
+
+	return currentp;
+}
 
 void
 highlight_menu(int i)
@@ -97,9 +116,12 @@ create_menu()
 void
 select_menu_item()
 {
-	if (current != NULL) {
-		focus_client(current, current->stack);
-		current = NULL;
+	struct client *client;
+
+	client = current(current_stack());
+	if (client != NULL) {
+		focus_client(client, NULL);
+		currentp = NULL;
 	}
 	close_menu();
 }
@@ -110,7 +132,7 @@ move_menu_item(int dir)
 	struct client *client;
 	struct stack *stack;
 
-	client = current;
+	client = current(current_stack());
 	stack = current_stack();
 
 	if (client == NULL || !_menu_visible) {
@@ -146,34 +168,44 @@ move_menu_item_left()
 void
 select_move_menu_item()
 {
+	struct client *client;
+
 	highlight_stacks(0);
 	if (_global_menu_visible) {
+		client = current(NULL);
 		close_global_menu();
-		if (global_current != NULL)
-			focus_client(global_current, global_current->stack);
-		global_current = NULL;
-	} else if (current != NULL) {
-		focus_client(current, current_stack());
-		current = NULL;
+		if (client != NULL)
+			focus_client(client, client->stack);
+	} else {
+		client = current(current_stack());
+		close_menu();
+		if (client != NULL)
+			focus_client(client, NULL);
 	}
-	close_menu();
+	currentp = NULL;
 }
 
 void
 select_menu_item_right()
 {
+	struct client *client;
+
+	client = current(current_stack());
 	focus_stack_forward();
-	if (current != NULL)
-		focus_client(current, current_stack());
+	if (client != NULL)
+		focus_client(client, NULL);
 	close_menu();
 }
 
 void
 select_menu_item_left()
 {
+	struct client *client;
+
+	client = current(current_stack());
 	focus_stack_backward();
-	if (current != NULL)
-		focus_client(current, current_stack());
+	if (client != NULL)
+		focus_client(client, NULL);
 	close_menu();
 }
 
@@ -224,7 +256,7 @@ open_global_menu()
 	if (_global_menu_visible)
 		return;
 
-	global_current = current_client();
+	currentp = NULL;
 	if (_global_menu == 0)
 		create_global_menu();
 	_global_menu_visible = 1;
@@ -242,9 +274,13 @@ close_global_menu()
 void
 select_next_global_menu()
 {
-	global_current = next_client(global_current, NULL);
-	if (global_current == NULL)
-		global_current = next_client(NULL, NULL);
+	struct client *client;
+
+	client = current(NULL);
+	currentp = next_client(client, NULL);
+
+	if (currentp == NULL)
+		currentp = next_client(NULL, NULL);
 }
 
 void
@@ -261,7 +297,7 @@ draw_global_menu()
 	if (_global_menu_visible == 0 || _global_menu == 0)
 		return;
 
-	client = global_current;
+	client = current(NULL);
 
 	XClearWindow(display(), _global_menu);
 	XRaiseWindow(display(), _global_menu);
@@ -272,8 +308,8 @@ draw_global_menu()
 	if (name == NULL)
 		name = "???";
 
-	is_last = (next_client(global_current, NULL) == NULL);
-	is_first = (global_current == next_client(NULL, NULL));
+	is_last = (next_client(client, NULL) == NULL);
+	is_first = (client == next_client(NULL, NULL));
 
 	snprintf(buf, sizeof(buf), "%c%s%c",
 	    is_first ? '<' : ' ', name, is_last ? '>' : ' ');
@@ -286,7 +322,7 @@ draw_global_menu()
 void
 draw_menu()
 {
-	struct client *client;
+	struct client *client, *cclient;
 	unsigned short x, y;
 	char *name;
 	struct stack *stack = current_stack();
@@ -317,6 +353,7 @@ draw_menu()
 	avail = (STACK_WIDTH(stack) - font_x) / font_width;
 
 	client = NULL;
+	cclient = current(current_stack());
 	row = 0;
 	while ((client = next_client(client, stack)) != NULL) {
 		name = client_name(client);
@@ -335,7 +372,7 @@ draw_menu()
 		x = font_x;
 		y = (row * font_height) + font_y;
 
-		if (client == current) {
+		if (client == cclient) {
 			if (!_highlight)
 				XDrawString(display(), _menu, _focus_gc,
 				    x, y, buf, strlen(buf));
@@ -359,7 +396,7 @@ show_menu()
 {
 	if (_menu == 0)
 		create_menu();
-	current = current_client();
+	currentp = NULL;
 	if (!_menu_visible) {
 		TRACE_LOG("map menu window %lx", _menu);
 		XMapWindow(display(), _menu);
@@ -376,7 +413,7 @@ hide_menu()
 		TRACE_LOG("hide menu window %lx", _menu);
 		XUnmapWindow(display(), _menu);
 		_menu_visible = 0;
-		current = NULL;
+		currentp = NULL;
 	} else
 		TRACE_LOG("ignore");
 }
@@ -384,11 +421,14 @@ hide_menu()
 void
 focus_menu_backward()
 {
+	struct client *client;
+
 	if (!_menu_visible)
 		return;
 
-	current = prev_client(current, current_stack());
-	if (current == NULL) {
+	client = current(current_stack());
+	currentp = prev_client(client, current_stack());
+	if (currentp == NULL) {
 		hide_menu();
 		return;
 	}
@@ -398,11 +438,16 @@ focus_menu_backward()
 void
 focus_menu_forward()
 {
+	struct client *client;
+
 	if (!_menu_visible) {
 		show_menu();
 		return;
 	}
-	if (next_client(current, current_stack()) != NULL)
-		current = next_client(current, current_stack());
+
+	client = current(current_stack());
+	client = next_client(client, current_stack());
+	if (client != NULL)
+		currentp = client;
 	draw_menu();
 }

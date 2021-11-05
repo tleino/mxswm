@@ -49,6 +49,8 @@ read_protocols(struct client *client)
 	int n, i;
 	Display *dpy = display();
 
+	TRACE_LOG("reading");
+
 	delwin = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	takefocus = XInternAtom(dpy, "WM_TAKE_FOCUS", False);
 
@@ -61,7 +63,11 @@ read_protocols(struct client *client)
 		}
 		if (protocols != NULL)
 			XFree(protocols);
+	} else {
+		TRACE_LOG("problem reading");
 	}
+
+	TRACE_LOG("flags: %d", client->flags);
 }
 
 void

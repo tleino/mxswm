@@ -121,10 +121,28 @@ str_event(XEvent *event)
 }
 #endif
 
+static int
+is_input_only(Window window)
+{
+	XWindowAttributes wa;
+	Display *d = display();
+	int input_only;
+
+	input_only = 0;
+	if (XGetWindowAttributes(d, window, &wa)) {
+		input_only = (wa.class == InputOnly);
+		TRACE_LOG("input_only: %d", input_only);
+		return input_only;
+	}
+
+	return 0;
+}
+
 int
 handle_event(XEvent *event)
 {
 	struct stack *stack;
+	Atom a_protocols, a_name, a_u8_name;
 
 #ifdef TRACE
 	_current_event = event;
@@ -159,11 +177,22 @@ handle_event(XEvent *event)
 	case PropertyNotify:
 		window = event->xproperty.window;
 		client = have_client(window);
+		a_protocols = XInternAtom(display(), "WM_PROTOCOLS", False);
+		a_name = XInternAtom(display(), "WM_NAME", False);
+		a_u8_name = XInternAtom(display(), "_NET_WM_NAME", False);
 		if (client != NULL) {
-			TRACE_LOG("update");
-			update_client_name(client);
-			draw_stack(client->stack);
-			draw_menu();
+			TRACE_LOG("update atom=%lu", event->xproperty.atom);
+			if (event->xproperty.atom == a_protocols) {
+				read_protocols(client);
+				draw_stack(client->stack);
+				draw_menu();
+			} else if (event->xproperty.atom == a_name ||
+			    event->xproperty.atom == a_u8_name) {
+				update_client_name(client);
+				draw_stack(client->stack);
+				draw_menu();
+			} else
+				TRACE_LOG("unsupported atom");
 		} else
 			TRACE_LOG("ignore");
 		break;
@@ -179,10 +208,16 @@ handle_event(XEvent *event)
 			    client->flags & CF_FOCUS_WHEN_MAPPED) {
 				client->flags &= ~CF_FOCUS_WHEN_MAPPED;
 				focus_client(client, current_stack());
+			} else if (client->mapped == 0) {
+				stack = client->stack;
+				CLIENT_STACK(client) = NULL;
+				client->flags |= CF_FOCUS_WHEN_MAPPED;
+				draw_stack(stack);
+				draw_menu();
 			}
 		} else if ((stack = have_stack(window)) != NULL)
 			stack->mapped = (event->type == MapNotify) ? 1 : 0;
-		else	
+		else
 			TRACE_LOG("ignore");
 		break;
 	case DestroyNotify:
@@ -193,7 +228,11 @@ handle_event(XEvent *event)
 		client = have_client(window);
 		if (client != NULL) {
 			TRACE_LOG("remove");
+			stack = client->stack;
 			remove_client(client);
+			draw_stack(stack);
+			draw_menu();
+			client = NULL;
 		} else
 			TRACE_LOG("ignore");
 		break;
@@ -210,7 +249,8 @@ handle_event(XEvent *event)
 		    event->xcreatewindow.x, event->xcreatewindow.y,
 		    event->xcreatewindow.border_width,
 		    event->xcreatewindow.override_redirect);
-		if (event->xcreatewindow.override_redirect == True)
+		if (event->xcreatewindow.override_redirect == True ||
+		    is_input_only(window))
 			TRACE_LOG("ignore");
 		else {
 			client = add_client(window, NULL, 0);
@@ -218,6 +258,7 @@ handle_event(XEvent *event)
 				warn("add_client");
 			else
 				XSetWindowBorderWidth(display(), window, 0);
+			TRACE_LOG("created");
 		}
 		break;
 	default:

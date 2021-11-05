@@ -306,6 +306,9 @@ draw_stack(struct stack *stack)
 	char buf[1024], flags[10];
 	size_t nclients;
 
+	if (stack == NULL)
+		return;
+
 	dpy = display();
 	client = find_top_client(stack);
 
