@@ -177,11 +177,16 @@ move_stack(int dir)
 void
 highlight_stacks(int i)
 {
+	TRACE_LOG("* %d", i);
+
 	_highlight = i;
-	if (_highlight)
+	if (_highlight) {
+		TRACE_LOG("draw current stack...");
 		draw_stack(current_stack());
-	else
+	} else {
+		TRACE_LOG("draw all stacks");
 		draw_stacks();
+	}
 }
 
 void
@@ -306,8 +311,10 @@ draw_stack(struct stack *stack)
 	char buf[1024], flags[10];
 	size_t nclients;
 
-	if (stack == NULL)
+	if (stack == NULL || stack->hidden) {
+		TRACE_LOG("not drawing this stack...");
 		return;
+	}
 
 	dpy = display();
 	client = find_top_client(stack);
@@ -316,9 +323,6 @@ draw_stack(struct stack *stack)
 
 	if (!stack->mapped)
 		XMapWindow(dpy, stack->window);
-
-	if (client != NULL && !client->mapped)
-		XMapWindow(dpy, client->window);
 
 	XClearWindow(dpy, stack->window);
 	XRaiseWindow(dpy, stack->window);
@@ -398,8 +402,8 @@ resize_stack(struct stack *stack, unsigned short width)
 	dpy = display();
 	stack->width = width;
 
-	XMoveWindow(dpy, stack->window, stack->x, 0);
-	XResizeWindow(dpy, stack->window, stack->width, BORDERWIDTH);
+	XMoveResizeWindow(dpy, stack->window, stack->x, 0, stack->width,
+	    BORDERWIDTH);
 	resize_clients(stack);
 	draw_stack(stack);
 }
@@ -581,6 +585,9 @@ remove_stack(struct stack *stack)
 		if (CLIENT_STACK(client) == stack) {
 			CLIENT_STACK(client) = _focus;
 		}
+		if (CLIENT_REAPPEAR_STACK(client) == stack) {
+			CLIENT_REAPPEAR_STACK(client) = _focus;
+		}
 		resize_client(client);
 	}
 
@@ -598,9 +605,10 @@ focus_stack(struct stack *stack)
 
 	dump_stacks();
 
+	TRACE_LOG("focus stack wants to focus client...");
 	focus_client(find_top_client(stack), stack);
 
-	if (prev != NULL) {
+	if (prev != NULL && prev != _focus) {
 		XSetWindowBackground(display(), prev->window,
 		    query_color(COLOR_TITLE_BG_NORMAL).pixel);
 		draw_stack(prev);
@@ -665,9 +673,9 @@ current_stack()
 void
 dump_stack(struct stack *sp)
 {
-	TRACE_LOG("stack %s%d (width: %d, +%d+%d)",
+	TRACE_LOG("stack %s%d (width: %d, +%d+%d, mapped: %d, hidden: %d)",
 	    (sp == _focus) ? "*" : " ",
-	    sp->num, sp->width, sp->x, sp->y);
+	    sp->num, sp->width, sp->x, sp->y, sp->mapped, sp->hidden);
 }
 
 void

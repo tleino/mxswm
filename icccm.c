@@ -1,6 +1,5 @@
 /*
- * ISC License
- *
+ * mxswm - MaXed Stacks Window Manager for X11
  * Copyright (c) 2021, Tommi Leino <namhas@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,6 +14,36 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/*
+ * icccm.c:
+ *   Implements ICCCM support plus some EWMH e.g. Extended Window Manager
+ *   Hints a.k.a. NetWM support.
+ *
+ *   The 'wmh' global a.k.a. Window Manager Hints collects both ICCCM
+ *   inter-client communication atoms and EWMH atoms to a single array.
+ *
+ * ICCCM:
+ *   https://www.x.org/releases/X11R7.6/doc/xorg-docs/specs/ICCCM/icccm.html
+ *
+ * EWMH:
+ *   https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html
+ */
+
+#include "mxswm.h"
+
+Atom wmh[NUM_WMH];
+
+void
+init_wmh()
+{
+	static char *atoms[] = {
+		"WM_PROTOCOLS",
+		"_NET_WM_NAME"
+	};
+
+	XInternAtoms(display(), atoms, ARRLEN(atoms), False, wmh);
+}
 
 #include "mxswm.h"
 

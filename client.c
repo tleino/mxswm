@@ -114,18 +114,16 @@ add_client(Window window, struct client *after, int mapped)
 			_head->next->prev = _head;
 	}
 
-	read_protocols(client);
-
 	XSelectInput(display(), window, PropertyChangeMask);
 
 	if (mapped) {
-		XSetWindowBorderWidth(display(), window, 0);
+		read_protocols(client);
+		update_client_name(client);
 		focus_client(client, NULL);
 		draw_menu();
 	} else
 		client->flags |= CF_FOCUS_WHEN_MAPPED;
 
-	update_client_name(client);
 	return client;
 }
 
@@ -218,7 +216,7 @@ find_top_client(struct stack *stack)
 	struct client *np;
 
 	for (np = _head; np != NULL; np = np->next)
-		if (np->stack == stack)
+		if (np->stack == stack && np->mapped)
 			return np;
 
 	return NULL;
@@ -249,18 +247,33 @@ resize_client(struct client *client)
 	Display *dpy;
 	struct stack *stack;
 	Window window;
+	unsigned long xwcm;
+	XWindowChanges xwc;
 
 	dpy = display();
 
-	if (client == NULL || !client->mapped)
+	TRACE_LOG("resize client");
+
+	if (client == NULL)
 		return;
 
-	assert(client->stack != NULL);
 	stack = client->stack;
+	if (stack == NULL)
+		stack = current_stack();
+
+	TRACE_LOG("resize to %dx%d+%d+%d",
+	    STACK_WIDTH(stack), STACK_HEIGHT(stack), STACK_X(stack),
+	    STACK_Y(stack) + BORDERWIDTH);
 
 	window = client->window;
-	XMoveWindow(dpy, window, STACK_X(stack), STACK_Y(stack) + BORDERWIDTH);
-	XResizeWindow(dpy, window, STACK_WIDTH(stack), STACK_HEIGHT(stack));
+
+	xwcm = (CWX | CWY | CWWidth | CWHeight | CWBorderWidth);
+	xwc.x = STACK_X(stack);
+	xwc.y = STACK_Y(stack) + BORDERWIDTH;
+	xwc.width = STACK_WIDTH(stack);
+	xwc.height = STACK_HEIGHT(stack);
+	xwc.border_width = 0;
+	XConfigureWindow(dpy, window, xwcm, &xwc);
 }
 
 size_t
@@ -294,8 +307,11 @@ focus_client(struct client *client, struct stack *stack)
 	struct client *prev;
 	Window window;
 
-	if (client == NULL || !client->mapped)
+	if (client == NULL || !client->mapped) {
+		if (client != NULL && client->mapped == 0)
+			TRACE_LOG("tried to focus unmapped client");
 		return;
+	}
 
 	if (stack == NULL)
 		stack = current_stack();
@@ -396,8 +412,10 @@ unmap_clients(struct stack *stack)
 	struct client *np;
 
 	for (np = _head; np != NULL; np = np->next)
-		if (np->stack == stack && np->mapped)
+		if (np->stack == stack && np->mapped) {
+			np->reappear = stack;
 			XUnmapWindow(display(), np->window);
+		}
 }
 
 void
@@ -406,8 +424,10 @@ map_clients(struct stack *stack)
 	struct client *np;
 
 	for (np = _head; np != NULL; np = np->next)
-		if (np->stack == stack && !np->mapped)
+		if (np->reappear == stack && !np->mapped) {
+			np->stack = np->reappear;
 			XMapWindow(display(), np->window);
+		}
 }
 
 struct client *

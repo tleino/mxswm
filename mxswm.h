@@ -59,6 +59,16 @@ time_t start_time();
 #define MAX(_x, _y) ((_x) > (_y) ? (_x) : (_y))
 #endif
 
+enum ewmh {
+	WM_PROTOCOLS=0,
+	_NET_WM_NAME,
+	NUM_WMH
+};
+
+extern Atom wmh[NUM_WMH];
+
+void init_wmh(void);
+
 enum
 {
 	COLOR_TITLE_BG_NORMAL,
@@ -122,6 +132,7 @@ struct client {
 #define CF_FOCUS_WHEN_MAPPED (1 << 2)
 	int flags;
 	struct stack *stack;
+	struct stack *reappear;
 	struct client *next;
 	struct client *prev;
 };
@@ -132,6 +143,7 @@ struct client {
 #define STACK_Y(_x) (_x)->y
 
 #define CLIENT_STACK(_x) (_x)->stack
+#define CLIENT_REAPPEAR_STACK(_x) (_x)->reappear
 
 struct stack *add_stack(struct stack *);
 struct stack *have_stack(Window);

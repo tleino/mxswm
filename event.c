@@ -18,6 +18,7 @@
 
 #include "mxswm.h"
 #include <err.h>
+#include <X11/Xatom.h>
 
 static Window window;
 
@@ -132,6 +133,37 @@ str_event(XEvent *event)
 }
 #endif
 
+static int disappear_error;
+
+static int
+handle_disappear_error(Display *display, XErrorEvent *event)
+{
+	TRACE_LOG("*");
+	disappear_error = 1;
+	return 1;
+}
+
+static void
+pass_configure(XConfigureRequestEvent *event)
+{
+	XWindowChanges wc;
+	Display *dpy;
+
+	TRACE_LOG("*");
+
+	dpy = display();
+
+	wc.x = event->x;
+	wc.y = event->y;
+	wc.width = event->width;
+	wc.height = event->height;
+	wc.border_width = event->border_width;
+	wc.stack_mode = Above;
+	event->value_mask &= ~CWStackMode;
+
+	XConfigureWindow(dpy, event->window, event->value_mask, &wc); 
+}
+
 static int
 is_input_only(Window window)
 {
@@ -140,11 +172,23 @@ is_input_only(Window window)
 	int input_only;
 
 	input_only = 0;
+
+	XSync(display(), False);
+	XSetErrorHandler(handle_disappear_error);
+
 	if (XGetWindowAttributes(d, window, &wa)) {
 		input_only = (wa.class == InputOnly);
 		TRACE_LOG("input_only: %d", input_only);
 		return input_only;
 	}
+
+	if (disappear_error) {
+		disappear_error = 0;
+		return 1;
+	}
+
+	XSync(display(), False);
+	XSetErrorHandler(None);
 
 	return 0;
 }
@@ -153,13 +197,13 @@ int
 handle_event(XEvent *event)
 {
 	struct stack *stack;
-	Atom a_protocols, a_name, a_u8_name;
 
 #ifdef TRACE
 	_current_event = event;
 #endif
 	timestamp = CurrentTime;
 	window = 0;
+
 	switch (event->type) {
 	case ButtonPress:
 		window = event->xbutton.window;
@@ -188,22 +232,32 @@ handle_event(XEvent *event)
 	case PropertyNotify:
 		window = event->xproperty.window;
 		client = have_client(window);
-		a_protocols = XInternAtom(display(), "WM_PROTOCOLS", False);
-		a_name = XInternAtom(display(), "WM_NAME", False);
-		a_u8_name = XInternAtom(display(), "_NET_WM_NAME", False);
 		if (client != NULL) {
 			TRACE_LOG("update atom=%lu", event->xproperty.atom);
-			if (event->xproperty.atom == a_protocols) {
-				read_protocols(client);
-				draw_stack(client->stack);
-				draw_menu();
-			} else if (event->xproperty.atom == a_name ||
-			    event->xproperty.atom == a_u8_name) {
+			switch (event->xproperty.atom) {
+			case XA_WM_NAME:
 				update_client_name(client);
 				draw_stack(client->stack);
 				draw_menu();
-			} else
-				TRACE_LOG("unsupported atom");
+				break;
+			default:
+				if (event->xproperty.atom ==
+				    wmh[WM_PROTOCOLS]) {
+					read_protocols(client);
+					draw_stack(client->stack);
+					draw_menu();
+				} else if (event->xproperty.atom ==
+				    wmh[_NET_WM_NAME]) {
+					update_client_name(client);
+					draw_stack(client->stack);
+					draw_menu();
+				} else {
+					TRACE_LOG("unsupported atom %s",
+					    XGetAtomName(display(),
+					    event->xproperty.atom));
+				}
+				break;
+			}
 		} else
 			TRACE_LOG("ignore");
 		break;
@@ -218,11 +272,15 @@ handle_event(XEvent *event)
 			if (client->mapped &&
 			    client->flags & CF_FOCUS_WHEN_MAPPED) {
 				client->flags &= ~CF_FOCUS_WHEN_MAPPED;
-				focus_client(client, current_stack());
+				focus_client(client, client->stack);
+			} else if (client->mapped &&
+			    client->stack == current_stack()) {
+				focus_client(client, client->stack);
+			} else if (client->mapped && client->stack == NULL) {
+				client->stack = current_stack();
 			} else if (client->mapped == 0) {
 				stack = client->stack;
 				CLIENT_STACK(client) = NULL;
-				client->flags |= CF_FOCUS_WHEN_MAPPED;
 				draw_stack(stack);
 				draw_menu();
 			}
@@ -247,6 +305,46 @@ handle_event(XEvent *event)
 		} else
 			TRACE_LOG("ignore");
 		break;
+	case MapRequest:
+		window = event->xmaprequest.window;
+		client = have_client(window);
+		if (client != NULL) {
+			TRACE_LOG("mapping");
+			XSelectInput(display(), window, PropertyChangeMask);
+			read_protocols(client);
+			update_client_name(client);
+			XMapWindow(display(), window);
+		} else
+			TRACE_LOG("ignore");
+		break;
+	case ConfigureRequest:
+		window = event->xconfigurerequest.window;
+		client = have_client(window);
+		if (client != NULL) {
+			TRACE_LOG("got %dx%d+%d+%d",
+			    event->xconfigurerequest.width,
+			    event->xconfigurerequest.height,
+			    event->xconfigurerequest.x,
+			    event->xconfigurerequest.y);
+
+			/*
+			 * We don't care about the window configuration
+			 * before the window is mapped except for mild
+			 * optimization reasons, but we cannot optimize
+			 * because some clients such as 'xterm' behave
+			 * erratically unless the requested configuration
+			 * is passed as is.
+			 *
+			 * In other words, we intercept only whenever
+			 * clients try to change window configuration of
+			 * mapped windows in which case we simply do
+			 * nothing because windows will always be maximized.
+			 */
+			if (!client->mapped)
+				pass_configure(&event->xconfigurerequest);
+		} else
+			TRACE_LOG("ignore");
+		break;
 	case ConfigureNotify:
 		window = event->xconfigure.window;
 		TRACE_LOG("%dx%d+%d+%d", event->xconfigure.width,
@@ -267,8 +365,6 @@ handle_event(XEvent *event)
 			client = add_client(window, NULL, 0);
 			if (client == NULL)
 				warn("add_client");
-			else
-				XSetWindowBorderWidth(display(), window, 0);
 			TRACE_LOG("created");
 		}
 		break;

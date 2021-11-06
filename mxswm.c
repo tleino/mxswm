@@ -39,7 +39,8 @@ select_root_events(Display *display)
 	             SubstructureNotifyMask |
 	             KeyReleaseMask |
 	             ButtonPressMask |
-	             ButtonReleaseMask);
+	             ButtonReleaseMask |
+	             SubstructureRedirectMask);
 
 	/*
 	 * Enable click-to-focus.
@@ -121,6 +122,8 @@ open_display()
                	else
                        	errx(1, "failed X11 connection to '%s'", denv);
 	}
+
+	init_wmh();
 }
 
 Display *

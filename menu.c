@@ -331,29 +331,29 @@ draw_menu()
 	int avail;
 	size_t nclients;
 
-	TRACE_LOG("visible=%d", _menu_visible);
-
-	if (_menu_visible == 0 || _menu == 0)
+	if (_menu_visible == 0 || _menu == 0) {
+		TRACE_LOG("not doing anything...");
 		return;
+	}
 
 	client = NULL;
 	nclients = count_clients(stack);
 
 	if (nclients == 0) {
+		TRACE_LOG("zero clients, closing menu");
 		close_menu();
 		return;
 	}
 
-	XMoveWindow(display(), _menu, STACK_X(stack), BORDERWIDTH);
-	XResizeWindow(display(), _menu, STACK_WIDTH(stack),
-	    nclients * font_height);
+	cclient = current(current_stack());
 
+	XMoveResizeWindow(display(), _menu, STACK_X(stack), BORDERWIDTH,
+	    STACK_WIDTH(stack), nclients * font_height);
 	XRaiseWindow(display(), _menu);
 
 	avail = (STACK_WIDTH(stack) - font_x) / font_width;
 
 	client = NULL;
-	cclient = current(current_stack());
 	row = 0;
 	while ((client = next_client(client, stack)) != NULL) {
 		name = client_name(client);
@@ -364,7 +364,7 @@ draw_menu()
 
 		snprintf(flags, sizeof(flags), "%d%c%c%c%c",
 		    client->stack ? client->stack->num : 0,
-		    (current_client() == client) ? '*' : '-',
+		    (cclient == client) ? '*' : '-',
 		    client->flags & CF_HAS_TAKEFOCUS ? 't' : '-',
 		    client->flags & CF_HAS_DELWIN ? 'd' : '-',
 		    client->mapped ? 'm' : '-');
@@ -389,11 +389,14 @@ draw_menu()
 			    y, flags, strlen(flags));
 		row++;
 	}
+
+	TRACE_LOG("%zu clients displayed...", nclients);
 }
 
 void
 show_menu()
 {
+	TRACE_LOG("*");
 	if (_menu == 0)
 		create_menu();
 	currentp = NULL;
@@ -441,6 +444,7 @@ focus_menu_forward()
 	struct client *client;
 
 	if (!_menu_visible) {
+		TRACE_LOG("showing menu because not visible");
 		show_menu();
 		return;
 	}
