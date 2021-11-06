@@ -23,13 +23,16 @@
 
 #ifdef TRACE
 #include <stdio.h>
+#include <time.h>
 const char *str_event(XEvent *);
 const char *current_event(void);
 Window current_window(void);
+time_t start_time();
 
 #define TRACE_LOG(...)  \
 	do { \
-		fprintf(stderr, "%-16s 0x%08lx %-16s %-16s ", \
+		fprintf(stderr, "%d %-16s 0x%08lx %-16s %-16s ", \
+		    (int) (time(0) - start_time()), \
 		    current_event(), current_window(), \
 		    event_client() ? event_client()->name : \
 		    "", __FUNCTION__); \

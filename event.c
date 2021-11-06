@@ -34,6 +34,17 @@ current_event_timestamp()
 #ifdef TRACE
 static XEvent *_current_event;
 
+time_t
+start_time()
+{
+	static time_t t;
+
+	if (t == 0)
+		t = time(NULL);
+
+	return t;
+}
+
 const char *
 current_event()
 {
