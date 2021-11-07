@@ -310,10 +310,10 @@ handle_event(XEvent *event)
 		client = have_client(window);
 		if (client != NULL) {
 			TRACE_LOG("mapping");
+			XMapWindow(display(), window);
 			XSelectInput(display(), window, PropertyChangeMask);
 			read_protocols(client);
 			update_client_name(client);
-			XMapWindow(display(), window);
 		} else
 			TRACE_LOG("ignore");
 		break;
