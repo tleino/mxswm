@@ -159,7 +159,10 @@ main(int argc, char *argv[])
 	Display *dpy;
 	int ctlfd;
 
-	setlocale(LC_CTYPE, "en_US.UTF-8");
+	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+		errx(1, "no locale support");
+
+	mbtowc(NULL, NULL, MB_CUR_MAX);
 
 	dpy = display();
 	select_root_events(dpy);

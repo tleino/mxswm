@@ -20,6 +20,7 @@
 #define MXSWM_H
 
 #include <X11/Xlib.h>
+#include <X11/extensions/Xrender.h>
 
 #ifdef TRACE
 #include <stdio.h>
@@ -62,6 +63,7 @@ time_t start_time();
 enum ewmh {
 	WM_PROTOCOLS=0,
 	_NET_WM_NAME,
+	UTF8_STRING,
 	NUM_WMH
 };
 
@@ -73,9 +75,11 @@ enum
 {
 	COLOR_TITLE_BG_NORMAL,
 	COLOR_TITLE_BG_FOCUS,
+	COLOR_TITLE_FG_NORMAL,
 	COLOR_MENU_FG_NORMAL,
 	COLOR_MENU_FG_FOCUS,
 	COLOR_MENU_FG_HIGHLIGHT,
+	COLOR_FLAGS,
 	NUM_COLOR
 };
 
@@ -91,6 +95,13 @@ enum
 #define FALLBACKFONT \
 	"-misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1"
 
+enum font {
+	FONT_NORMAL=0,
+	FONT_TITLE,
+	FONT_FALLBACK,
+	NUM_FONT
+};
+
 /*
  * For 80-column terminals.
  */
@@ -101,9 +112,11 @@ enum
 
 #define COLOR_NAME_TITLE_BG_NORMAL	"gray"
 #define COLOR_NAME_TITLE_BG_FOCUS	"cornflower blue"
+#define COLOR_NAME_TITLE_FG_NORMAL	"white"
 #define COLOR_NAME_MENU_FG_NORMAL	"white"
 #define COLOR_NAME_MENU_FG_FOCUS	"purple"
 #define COLOR_NAME_MENU_FG_HIGHLIGHT	"blue"
+#define COLOR_NAME_FLAGS		"blue"
 
 struct client;
 
@@ -232,6 +245,12 @@ void highlight_menu(int);
 void do_keyaction(XKeyEvent *);
 void unbind_keys();
 void bind_keys();
+
+void set_font_color(int);
+void set_font(int);
+int get_font_height(void);
+void draw_font(Window, int, int, const char *);
+void font_extents(const char *, XGlyphInfo *);
 
 XColor query_color(int);
 

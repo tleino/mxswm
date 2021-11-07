@@ -39,7 +39,8 @@ init_wmh()
 {
 	static char *atoms[] = {
 		"WM_PROTOCOLS",
-		"_NET_WM_NAME"
+		"_NET_WM_NAME",
+		"UTF8_STRING"
 	};
 
 	XInternAtoms(display(), atoms, ARRLEN(atoms), False, wmh);

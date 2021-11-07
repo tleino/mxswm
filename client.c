@@ -30,34 +30,58 @@ static struct client *_focus;
 
 static void try_utf8_name(struct client *);
 
+int
+get_utf8_property(Window window, Atom atom, char **text)
+{
+	XTextProperty prop, prop2;
+	char **list;
+	int nitems = 0;
+
+	*text = NULL;
+
+	XGetTextProperty(display(), window, &prop, atom);
+	if (!prop.nitems) {
+		XFree(prop.value);
+		return 0;
+	}
+
+	if (Xutf8TextPropertyToTextList(display(), &prop, &list,
+	    &nitems) == Success && nitems > 0 && *list) {
+		if (Xutf8TextListToTextProperty(display(), list, nitems,
+		    XUTF8StringStyle, &prop2) == Success) {
+			*text = strdup((const char *) prop2.value);
+			XFree(prop2.value);
+		} else {
+			*text = strdup(*list);
+		}
+		XFreeStringList(list);
+	}
+	XFree(prop.value);
+	return nitems;
+}
+
 static void
 try_utf8_name(struct client *client)
 {
-	Atom u8name, u8type, type;
-	unsigned char *name;
-	int form;
-	unsigned long remain, len;
-
-	u8type = XInternAtom(display(), "UTF8_STRING", False);
-	u8name = XInternAtom(display(), "_NET_WM_NAME", False);
-	name = NULL;
-
-	if (XGetWindowProperty(display(), client->window,
-	    u8name, 0, 1024, False, u8type, &type, &form,
-	    &len, &remain, &name) == Success) {
-		TRACE_LOG("_NET_WM_NAME");
-		if (name != NULL) {
-			if (client->name != NULL)
-				free(client->name);
-			client->name = strdup(name);
-		}
+	if (client->name) {
+		free(client->name);
+		client->name = NULL;
 	}
+	get_utf8_property(client->window, wmh[_NET_WM_NAME],
+	    &client->name);
+
+	if (client->name != NULL)
+		TRACE_LOG("Got client name: '%s'", client->name);
 }
 
 void
 update_client_name(struct client *client)
 {
 	XTextProperty text;
+
+	try_utf8_name(client);
+	if (client->name != NULL)
+		return;
 
 	if (XGetWMName(display(), client->window, &text) == 0) {
 		warnx("unable to get name");
@@ -70,8 +94,6 @@ update_client_name(struct client *client)
 			client->name[text.nitems] = 0;
 		}
 	}
-
-	try_utf8_name(client);
 
 	if (client->name != NULL && client->name[0] == '\0') {
 		free(client->name);

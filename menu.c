@@ -23,18 +23,14 @@
 
 static Window _menu;
 static Window _global_menu;
-static GC _gc, _focus_gc, _highlight_gc;
 
 static struct client *currentp;
 
-static XFontStruct *_fs;
 static int _menu_visible;
 static int _global_menu_visible;
 static int _highlight;
-static int font_x, font_y, font_width, font_height;
 
 static void move_menu_item(int);
-static void ensure_font(void);
 
 static struct client *
 current(struct stack *stack)
@@ -74,10 +70,10 @@ create_global_menu()
 	XSetWindowAttributes a;
 	unsigned long v;
 
-	ensure_font();
-
 	w = display_width() / 2;
-	h = font_height;
+
+	set_font(FONT_NORMAL);
+	h = get_font_height();
 	x = w/2;
 	y = display_height() / 2 - (h/2);
 	v = CWBackPixel | CWOverrideRedirect;
@@ -96,8 +92,6 @@ create_menu()
 	int x, y, w, h;
 	XSetWindowAttributes a;
 	unsigned long v;
-
-	ensure_font();
 
 	w = 1;
 	h = 1;
@@ -209,47 +203,6 @@ select_menu_item_left()
 	close_menu();
 }
 
-static void
-ensure_font()
-{
-	XGCValues v;
-
-	if (_fs == NULL) {
-		_fs = XLoadQueryFont(display(), FONTNAME);
-		if (_fs == NULL) {
-			warnx("couldn't load font: %s", FONTNAME);
-			_fs = XLoadQueryFont(display(), FALLBACKFONT);
-			if (_fs == NULL)
-				errx(1, "couldn't load font: %s",
-				    FALLBACKFONT);
-		}
-
-		font_x = _fs->min_bounds.lbearing;
-		font_y = _fs->max_bounds.ascent;
-		font_width = _fs->max_bounds.rbearing -
-		    _fs->min_bounds.lbearing;
-		font_height = _fs->max_bounds.ascent +
-		    _fs->max_bounds.descent;
-	}
-
-	if (_gc == 0) {
-		v.foreground = query_color(COLOR_MENU_FG_NORMAL).pixel;
-		v.font = _fs->fid;
-		_gc = XCreateGC(display(), DefaultRootWindow(display()),
-		    GCForeground | GCFont, &v);
-
-		v.foreground = query_color(COLOR_MENU_FG_FOCUS).pixel;
-		v.font = _fs->fid;
-		_focus_gc = XCreateGC(display(), DefaultRootWindow(display()),
-		    GCForeground | GCFont, &v);
-
-		v.foreground = query_color(COLOR_MENU_FG_HIGHLIGHT).pixel;
-		v.font = _fs->fid;
-		_highlight_gc = XCreateGC(display(),
-		    DefaultRootWindow(display()), GCForeground | GCFont, &v);
-	}
-}
-
 void
 open_global_menu()
 {
@@ -287,7 +240,6 @@ void
 draw_global_menu()
 {
 	struct client *client;
-	unsigned short x, y;
 	char *name;
 	char buf[256];
 	int is_last, is_first;
@@ -314,22 +266,22 @@ draw_global_menu()
 	snprintf(buf, sizeof(buf), "%c%s%c",
 	    is_first ? '<' : ' ', name, is_last ? '>' : ' ');
 
-	x = font_x;
-	y = font_y;
-	XDrawString(display(), _global_menu, _gc, x, y, buf, strlen(buf));
+	set_font_color(COLOR_MENU_FG_NORMAL);
+	set_font(FONT_NORMAL);
+	draw_font(_global_menu, 0, 0, buf);
 }
 
 void
 draw_menu()
 {
 	struct client *client, *cclient;
-	unsigned short x, y;
 	char *name;
 	struct stack *stack = current_stack();
 	char buf[256], flags[10];
-	int row;
-	int avail;
+	int row_height;
+	int y;
 	size_t nclients;
+	XGlyphInfo extents;
 
 	if (_menu_visible == 0 || _menu == 0) {
 		TRACE_LOG("not doing anything...");
@@ -347,14 +299,17 @@ draw_menu()
 
 	cclient = current(current_stack());
 
+	set_font(FONT_NORMAL);
+	row_height = get_font_height();
+
 	XMoveResizeWindow(display(), _menu, STACK_X(stack), BORDERWIDTH,
-	    STACK_WIDTH(stack), nclients * font_height);
+	    STACK_WIDTH(stack), nclients * row_height);
+	XClearWindow(display(), _menu);
+
 	XRaiseWindow(display(), _menu);
 
-	avail = (STACK_WIDTH(stack) - font_x) / font_width;
-
 	client = NULL;
-	row = 0;
+	y = 0;
 	while ((client = next_client(client, stack)) != NULL) {
 		name = client_name(client);
 		if (name == NULL)
@@ -369,25 +324,21 @@ draw_menu()
 		    client->flags & CF_HAS_DELWIN ? 'd' : '-',
 		    client->mapped ? 'm' : '-');
 
-		x = font_x;
-		y = (row * font_height) + font_y;
-
 		if (client == cclient) {
-			if (!_highlight)
-				XDrawString(display(), _menu, _focus_gc,
-				    x, y, buf, strlen(buf));
+			if (_highlight)
+				set_font_color(COLOR_MENU_FG_HIGHLIGHT);
 			else
-				XDrawString(display(), _menu,
-				    _highlight_gc, x, y, buf, strlen(buf));
+				set_font_color(COLOR_MENU_FG_FOCUS);
 		} else
-			XDrawString(display(), _menu, _gc, x, y, buf,
-			    strlen(buf));
+			set_font_color(COLOR_MENU_FG_NORMAL);
 
-		if (avail >= strlen(flags))
-			XDrawString(display(), _menu, _gc,
-			    x + (avail-strlen(flags)) * font_width,
-			    y, flags, strlen(flags));
-		row++;
+		draw_font(_menu, 0, y, buf);
+
+		set_font_color(COLOR_FLAGS);
+		font_extents(flags, &extents);
+		draw_font(_menu, STACK_WIDTH(stack) - extents.width, y, flags);
+
+		y += row_height;
 	}
 
 	TRACE_LOG("%zu clients displayed...", nclients);

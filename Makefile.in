@@ -14,7 +14,7 @@ INSTALL ?= install
 INSTALLFLAGS ?=
 
 SRCS=mxswm.c stack.c client.c event.c menu.c keyboard.c ctlsocket.c ctl.c \
-	icccm.c color.c
+	icccm.c color.c font.c
 PROG=mxswm
 
 OBJS=$(SRCS:.c=.o)

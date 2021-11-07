@@ -39,7 +39,7 @@ esac
 echo "system: $(uname)"
 echo "SYSTEM_CFLAGS=" ${SYSTEM_CFLAGS}
 
-PKGS="x11 xinerama"
+PKGS="x11 xft"
 for a in ${PKGS} ; do
 	check_pkg $a
 done

@@ -24,10 +24,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <X11/Xft/Xft.h>
+
 static struct stack *_head;
 static struct stack *_focus;
-static XFontStruct *_fs;
-static GC _gc;
 static int _highlight;
 
 static void create_stack_titlebar(struct stack *);
@@ -263,27 +263,8 @@ create_stack_titlebar(struct stack *stack)
 	XSetWindowAttributes a;
 	unsigned long v;
 	Display *dpy;
-	XGCValues gcv;
 
 	dpy = display();
-
-	if (_fs == NULL) {
-		_fs = XLoadQueryFont(display(), TITLEFONTNAME);
-		if (_fs == NULL) {
-			warnx("couldn't load font: %s", TITLEFONTNAME);
-			_fs = XLoadQueryFont(display(), FALLBACKFONT);
-			if (_fs == NULL)
-				errx(1, "couldn't load font: %s",
-				    FALLBACKFONT);
-		}
-	}
-
-	if (_gc == 0) {
-		gcv.foreground = BlackPixel(dpy, DefaultScreen(dpy));
-		gcv.font = _fs->fid;
-		_gc = XCreateGC(dpy, DefaultRootWindow(dpy),
-		    GCForeground | GCFont, &gcv);
-	}
 
 	assert(BORDERWIDTH > 0);
 	w = BORDERWIDTH;
@@ -298,6 +279,7 @@ create_stack_titlebar(struct stack *stack)
 	    x, y, w, h, 0, CopyFromParent,
 	    InputOutput, CopyFromParent,
 	    v, &a);
+
 	XMapWindow(dpy, stack->window);
 }
 
@@ -306,10 +288,9 @@ draw_stack(struct stack *stack)
 {
 	Display *dpy;
 	struct client *client;
-	int x, y;
-	int font_width, font_height, font_x, font_y, avail;
 	char buf[1024], flags[10];
 	size_t nclients;
+	XGlyphInfo buf_extents, flags_extents;
 
 	if (stack == NULL || stack->hidden) {
 		TRACE_LOG("not drawing this stack...");
@@ -327,14 +308,14 @@ draw_stack(struct stack *stack)
 	XClearWindow(dpy, stack->window);
 	XRaiseWindow(dpy, stack->window);
 
-	font_x = _fs->min_bounds.lbearing;
-	font_y = _fs->max_bounds.ascent;
-	font_width = _fs->max_bounds.rbearing - _fs->min_bounds.lbearing;
-	font_height = _fs->max_bounds.ascent + _fs->max_bounds.descent;
-	avail = (stack->width - font_x) / font_width;
+	set_font(FONT_TITLE);
 
-	x = font_x;
-	y = (0 * font_height) + font_y;
+	if (_highlight)
+		snprintf(buf, sizeof(buf), "stack %d", stack->num);
+	else if (client != NULL && client->name != NULL)
+		snprintf(buf, sizeof(buf), "%s", client->name);
+	else
+		buf[0] = '\0';
 
 	if (nclients > 1)
 		snprintf(flags, sizeof(flags), "+%zu", nclients);
@@ -346,24 +327,15 @@ draw_stack(struct stack *stack)
 		    stack->sticky ? 's' : '-',
 		    stack->prefer_width ? 'w' : '-');
 
-	if (_highlight)
-		snprintf(buf, sizeof(buf), "stack %d", stack->num);
-	else if (client != NULL && client->name != NULL)
-		snprintf(buf, sizeof(buf), "%s", client->name);
-	else
-		buf[0] = '\0';
+	font_extents(buf, &buf_extents);
+	font_extents(flags, &flags_extents);
 
-	if (avail >= strlen(flags))
-		XDrawString(display(), stack->window, _gc, x, y, buf,
-		    MIN(avail-strlen(flags), strlen(buf)));
-	else
-		XDrawString(display(), stack->window, _gc, x, y, buf,
-		    MIN(avail, strlen(buf)));
+	set_font_color(COLOR_TITLE_FG_NORMAL);
+	draw_font(stack->window, 0, 0, buf);
 
-	if (avail >= strlen(flags))
-		XDrawString(display(), stack->window, _gc,
-		    x + (avail-strlen(flags)) * font_width,
-		    y, flags, strlen(flags));
+	set_font_color(COLOR_FLAGS);
+	draw_font(stack->window, stack->width - flags_extents.width,
+	    0, flags);
 }
 
 void
