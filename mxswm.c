@@ -23,6 +23,9 @@
 #include <stdlib.h>
 #include <locale.h>
 
+#include <X11/XKBlib.h>
+#include <X11/extensions/XKBrules.h>
+
 Display *_display;
 
 static void select_root_events(Display *);
@@ -110,6 +113,7 @@ static void
 open_display()
 {
 	char *denv;
+	int xkbmaj, xkbmin, xkb_op, xkb_event, xkb_error;
 
 	denv = getenv("DISPLAY");
 	if (denv == NULL && errno != 0)
@@ -122,6 +126,19 @@ open_display()
                	else
                        	errx(1, "failed X11 connection to '%s'", denv);
 	}
+
+	/*
+	 * We use XKB extension because XKeycodeToKeysym is deprecated,
+	 * even though there would be no big harm.
+	 */
+	xkbmaj = XkbMajorVersion;
+	xkbmin = XkbMinorVersion;
+	if (XkbLibraryVersion(&xkbmaj, &xkbmin) == False)
+		errx(1, "trouble with XKB extension; needed %d.%d got %d.%d",
+		    XkbMajorVersion, XkbMinorVersion, xkbmaj, xkbmin);
+	if (XkbQueryExtension(_display, &xkb_op, &xkb_event, &xkb_error,
+	    &xkbmaj, &xkbmin) == False)
+		errx(1, "trouble with XKB extension");
 
 	init_wmh();
 }
@@ -159,7 +176,7 @@ main(int argc, char *argv[])
 	Display *dpy;
 	int ctlfd;
 
-	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+	if (!setlocale(LC_CTYPE, "en_US.UTF-8") || !XSupportsLocale())
 		errx(1, "no locale support");
 
 	mbtowc(NULL, NULL, MB_CUR_MAX);

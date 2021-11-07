@@ -53,6 +53,7 @@ Ctrl+Win+Left	Move current stack to the left
 Ctrl+Win+Right	Move current stack to the right
 Win+S		Toggle sticky status for stack
 Win+H		Toggle hide other stacks (not counting sticky stacks)
+Win+Tab		Run command in this stack
 
 Clients
 -------

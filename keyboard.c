@@ -115,6 +115,10 @@ static const struct binding binding[] = {
 		NULL, toggle_stacks_maxwidth_override
 	},
 	{
+		XK_Tab, Mod4Mask,
+		NULL, open_prompt
+	},
+	{
 		XK_h, Mod4Mask,
 		toggle_hide_other_stacks, NULL
 	},

@@ -256,6 +256,8 @@ XColor query_color(int);
 
 Time current_event_timestamp(void);
 
+void open_prompt(void);
+
 #ifdef TRACE
 struct client *event_client();
 void set_event_client(struct client *);
