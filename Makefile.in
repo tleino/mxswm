@@ -19,7 +19,17 @@ PROG=mxswm
 
 OBJS=$(SRCS:.c=.o)
 
-all: $(PROG) mxswmctl
+all: fontnames.c fontnames.h colornames.c colornames.h $(PROG) mxswmctl
+
+fontnames.c: mkenum font.enums
+	./mkenum impl font <font.enums >$@
+fontnames.h: mkenum font.enums
+	./mkenum header font <font.enums >$@
+
+colornames.c: mkenum color.enums
+	./mkenum impl color <color.enums >$@
+colornames.h: mkenum color.enums
+	./mkenum header color <color.enums >$@
 
 mxswmctl:
 	make -C mxswmctl

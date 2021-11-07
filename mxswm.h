@@ -71,36 +71,14 @@ extern Atom wmh[NUM_WMH];
 
 void init_wmh(void);
 
-enum
-{
-	COLOR_TITLE_BG_NORMAL,
-	COLOR_TITLE_BG_FOCUS,
-	COLOR_TITLE_FG_NORMAL,
-	COLOR_MENU_FG_NORMAL,
-	COLOR_MENU_FG_FOCUS,
-	COLOR_MENU_FG_HIGHLIGHT,
-	COLOR_FLAGS,
-	NUM_COLOR
-};
+#include "fontnames.h"
+#include "colornames.h"
 
 /*
  * These are sane defaults for a 2560x1440 screen.
  * Modify freely locally.
  */
 #define BORDERWIDTH 28
-#define FONTNAME \
-	"-xos4-terminus-medium-r-normal--28-280-72-72-c-140-iso10646-1"
-#define TITLEFONTNAME \
-	"-xos4-terminus-bold-r-normal--28-280-72-72-c-140-iso10646-1"
-#define FALLBACKFONT \
-	"-misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1"
-
-enum font {
-	FONT_NORMAL=0,
-	FONT_TITLE,
-	FONT_FALLBACK,
-	NUM_FONT
-};
 
 /*
  * For 80-column terminals.
@@ -109,14 +87,6 @@ enum font {
 #define FONTWIDTH 14
 #define MAXWIDTH (FONTWIDTH * 80)
 #endif
-
-#define COLOR_NAME_TITLE_BG_NORMAL	"gray"
-#define COLOR_NAME_TITLE_BG_FOCUS	"cornflower blue"
-#define COLOR_NAME_TITLE_FG_NORMAL	"white"
-#define COLOR_NAME_MENU_FG_NORMAL	"white"
-#define COLOR_NAME_MENU_FG_FOCUS	"purple"
-#define COLOR_NAME_MENU_FG_HIGHLIGHT	"blue"
-#define COLOR_NAME_FLAGS		"blue"
 
 struct client;
 

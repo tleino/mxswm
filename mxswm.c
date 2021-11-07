@@ -22,6 +22,7 @@
 #include <err.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <stdio.h>
 
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBrules.h>

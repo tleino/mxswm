@@ -25,9 +25,7 @@
 #include <assert.h>
 #include <err.h>
 
-static const char *fontname[] = {
-	FONTNAME, TITLEFONTNAME, FALLBACKFONT
-};
+#include "fontnames.c"
 
 static XftColor ftcolor;
 static XftFont *ftfont[NUM_FONT];
