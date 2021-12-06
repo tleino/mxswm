@@ -180,6 +180,7 @@ struct client *find_top_client(struct stack *);
 void unmap_clients(struct stack *);
 void map_clients(struct stack *);
 void update_client_name(struct client *);
+void delete_client(void);
 
 unsigned short display_height(void);
 unsigned short display_width(void);

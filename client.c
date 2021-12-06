@@ -101,6 +101,17 @@ update_client_name(struct client *client)
 	}
 }
 
+void
+delete_client()
+{
+	struct client *client;
+
+	client = current_client();
+	if (client == NULL)
+		return;
+	XDestroyWindow(display(), client->window);
+}
+
 struct client *
 add_client(Window window, struct client *after, int mapped)
 {

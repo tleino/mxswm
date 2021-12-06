@@ -56,6 +56,7 @@ maximums, or for setting the width for 80 column terminals).
 * **Win+Menu** Cycle to next client in any stack
 * **Win+Down** Select client / raise selected client
 * **Win+Up** Select client / raise selected client
+* **Win+k** Delete client (does not use the WM_DELETE_WINDOW protocol yet, but destroys without asking)
 * **Ctrl+Win+Left** Move selected client to stack on the left
 * **Ctrl+Win+Right** Move selected client to stack on the right
 

@@ -103,6 +103,10 @@ static const struct binding binding[] = {
 		NULL, focus_menu_backward
 	},
 	{
+		XK_k, Mod4Mask,
+		NULL, delete_client
+	},
+	{
 		XK_F1, 0,
 		NULL, remove_stack_here
 	},
