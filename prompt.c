@@ -93,9 +93,9 @@ static int
 keycode(XKeyEvent *e)
 {
 	KeySym sym;
-	unsigned char ch[4 + 1];
-	unsigned char ex[4096];
-	unsigned char s[4096];
+	char ch[4 + 1];
+	char ex[4096];
+	char s[4096];
 	int n, ret;
 
 	sym = XkbKeycodeToKeysym(display(), e->keycode, 0,
@@ -105,9 +105,10 @@ keycode(XKeyEvent *e)
 		case XK_KP_Enter:
 		case XK_Return:
 			wcstombs(s, prompt, sizeof(s));
-			snprintf(ex, sizeof(ex), "%s &", s);
-			TRACE_LOG("Running %s", ex);
-			system(ex);
+			if (snprintf(ex, sizeof(ex), "%s &", s) < sizeof(ex)) {
+				TRACE_LOG("Running %s", ex);
+				system(ex);
+			}
 			return 0;
 		case XK_BackSpace:
 		case XK_Delete:
@@ -158,7 +159,7 @@ create_prompt()
 static void
 draw_prompt()
 {
-	unsigned char s[4096];
+	char s[4096];
 
 	XClearWindow(display(), window);
 

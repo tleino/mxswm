@@ -337,7 +337,6 @@ void
 focus_client(struct client *client, struct stack *stack)
 {
 	Display *dpy = display();
-	struct client *prev;
 	Window window;
 
 	if (client == NULL || !client->mapped) {
@@ -357,7 +356,6 @@ focus_client(struct client *client, struct stack *stack)
 		return;
 	}
 
-	prev = _focus;
 	_focus = client;
 	window = client->window;
 

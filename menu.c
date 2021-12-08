@@ -124,10 +124,8 @@ static void
 move_menu_item(int dir)
 {
 	struct client *client;
-	struct stack *stack;
 
 	client = current(current_stack());
-	stack = current_stack();
 
 	if (client == NULL || !_menu_visible) {
 		move_stack(dir);

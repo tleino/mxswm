@@ -22,23 +22,29 @@ OBJS=$(SRCS:.c=.o)
 all: fontnames.c fontnames.h colornames.c colornames.h $(PROG) mxswmctl
 
 fontnames.c: mkenum font.enums
-	./mkenum impl font <font.enums >$@
+	@./mkenum impl font <font.enums >$@
+	@echo $@
 fontnames.h: mkenum font.enums
-	./mkenum header font <font.enums >$@
+	@./mkenum header font <font.enums >$@
+	@echo $@
 
 colornames.c: mkenum color.enums
-	./mkenum impl color <color.enums >$@
+	@./mkenum impl color <color.enums >$@
+	@echo $@
 colornames.h: mkenum color.enums
-	./mkenum header color <color.enums >$@
+	@./mkenum header color <color.enums >$@
+	@echo $@
 
 mxswmctl:
 	make -C mxswmctl
 
 $(PROG): $(OBJS)
-	$(CC) -o$@ $(OBJS) $(LDFLAGS)
+	@$(CC) -o$@ $(OBJS) $(LDFLAGS)
+	@echo $@
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	@$(CC) $(CFLAGS) -c $<
+	@echo $@
 
 clean:
 	rm -f $(OBJS) $(PROG)
