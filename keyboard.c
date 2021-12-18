@@ -104,6 +104,10 @@ static const struct binding binding[] = {
 	},
 	{
 		XK_k, Mod4Mask,
+		NULL, destroy_client
+	},
+	{
+		XK_q, Mod4Mask,
 		NULL, delete_client
 	},
 	{

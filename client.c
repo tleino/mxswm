@@ -109,6 +109,20 @@ delete_client()
 	client = current_client();
 	if (client == NULL)
 		return;
+	if (client->flags & CF_HAS_DELWIN)
+		send_delete_window(client);
+	else
+		XDestroyWindow(display(), client->window);
+}
+
+void
+destroy_client()
+{
+	struct client *client;
+
+	client = current_client();
+	if (client == NULL)
+		return;
 	XDestroyWindow(display(), client->window);
 }
 
