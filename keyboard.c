@@ -37,6 +37,10 @@ static void control_on(void);
 static void win_on(void);
 void focus_next(void);
 
+#ifdef TRACE
+static void dump_all(void);
+#endif
+
 /*
  * Assuming normal PC keyboard where Mod4Mask corresponds to Win key,
  * and Mod1Mask to Alt key.
@@ -110,6 +114,12 @@ static const struct binding binding[] = {
 		XK_Up, Mod4Mask,
 		NULL, focus_menu_backward
 	},
+#ifdef TRACE
+	{
+		XK_a, Mod4Mask,
+		NULL, dump_all
+	},
+#endif
 	{
 		XK_k, Mod4Mask,
 		NULL, destroy_client
@@ -149,6 +159,15 @@ static const struct binding binding[] = {
 };
 
 static int menu;
+
+#ifdef TRACE
+static void
+dump_all()
+{
+	dump_stacks();
+	dump_clients();
+}
+#endif
 
 static void
 control_off()

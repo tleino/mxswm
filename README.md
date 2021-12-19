@@ -67,6 +67,10 @@ maximums, or for setting the width for 80 column terminals).
 * **BackSpace** Delete character
 * **Esc** Exit prompt without submitting
 
+### Debugging
+
+* **Win+a** Dump stack and client information to trace log.
+
 ## Build
 
 	$ ./configure ~
