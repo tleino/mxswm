@@ -220,20 +220,31 @@ toggle_hide_other_stacks()
 {
 	struct stack *np;
 	struct stack *current;
+	int n_hidden;
 
 	TRACE_LOG("*");
 
+	n_hidden = 0;
+	for (np = _head; np != NULL; np = np->next)
+		if (np->hidden)
+			n_hidden++;
+
 	current = current_stack();
-	for (np = _head; np != NULL; np = np->next) {
-		if (np->sticky)
+	if (current->sticky && n_hidden > 0) {
+		for (np = _head; np != NULL; np = np->next)
 			np->hidden = 0;
+	} else {
+		for (np = _head; np != NULL; np = np->next) {
+			if (np->sticky)
+				np->hidden = 0;
+			else
+				np->hidden ^= 1;
+		}
+		if (current->sticky)
+			current->hidden = 0;
 		else
-			np->hidden ^= 1;
+			current->hidden ^= 1;
 	}
-	if (current->sticky)
-		current->hidden = 0;
-	else
-		current->hidden ^= 1;
 
 	for (np = _head; np != NULL; np = np->next)
 		if (np->hidden)
