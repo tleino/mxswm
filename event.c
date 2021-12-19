@@ -301,6 +301,7 @@ handle_event(XEvent *event)
 			remove_client(client);
 			draw_stack(stack);
 			draw_menu();
+			focus_stack(current_stack());
 			client = NULL;
 		} else
 			TRACE_LOG("ignore");
