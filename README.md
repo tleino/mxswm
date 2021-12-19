@@ -45,8 +45,8 @@ maximums, or for setting the width for 80 column terminals).
 * **F3** Toggle overriding maxwidth setting
 * **Win+Left** Select stack on the left
 * **Win+Right** Select stack on the right
-* **Ctrl+Win+Left** Move current stack to the left
-* **Ctrl+Win+Right** Move current stack to the right
+* **Shift+Win+Left** Move current stack to the left
+* **Shift+Win+Right** Move current stack to the right
 * **Win+S** Toggle sticky status for stack
 * **Win+H** Toggle hide other stacks (not counting sticky stacks)
 * **Win+Tab** Run command in this stack
@@ -57,7 +57,7 @@ maximums, or for setting the width for 80 column terminals).
 * **Win+Down** Select client / raise selected client
 * **Win+Up** Select client / raise selected client
 * **Win+q** Delete client
-* **Win+k** Destroy client forcibly
+* **Win+k** Destroy client forcibly (rarely needed / should not be used)
 * **Ctrl+Win+Left** Move selected client to stack on the left
 * **Ctrl+Win+Right** Move selected client to stack on the right
 

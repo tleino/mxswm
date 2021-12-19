@@ -125,12 +125,12 @@ move_menu_item(int dir)
 {
 	struct client *client;
 
-	client = current(current_stack());
-
-	if (client == NULL || !_menu_visible) {
-		move_stack(dir);
+	if (_menu_visible && current(current_stack()) != NULL)
+		client = current(current_stack());
+	else
+		client = current_client();
+	if (client == NULL)
 		return;
-	}
 
 	if (dir == -1)
 		focus_stack_backward();
@@ -142,7 +142,11 @@ move_menu_item(int dir)
 		focus_client(client, client->stack);
 		client = NULL;
 	}
-	draw_menu();
+
+	if (_menu_visible) {
+		currentp = NULL;
+		draw_menu();
+	}
 }
 
 void

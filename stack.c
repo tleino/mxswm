@@ -149,6 +149,18 @@ stack_copy(struct stack *dst, struct stack *src)
 }
 
 void
+move_stack_right()
+{
+	move_stack(1);
+}
+
+void
+move_stack_left()
+{
+	move_stack(-1);
+}
+
+void
 move_stack(int dir)
 {
 	struct stack *stack, *target;

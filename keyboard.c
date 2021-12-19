@@ -51,6 +51,14 @@ static const struct binding binding[] = {
 		NULL, move_menu_item_right
 	},
 	{
+		XK_Left, Mod4Mask | ShiftMask,
+		NULL, move_stack_left
+	},
+	{
+		XK_Right, Mod4Mask | ShiftMask,
+		NULL, move_stack_right
+	},
+	{
 		XK_Left, Mod4Mask,
 		NULL, focus_stack_backward
 	},
@@ -219,8 +227,10 @@ _do_keyaction(XKeyEvent *xkey, const struct binding *bindings, size_t sz)
 		}
 	}
 
+#if 0
 	warnx("binding not found sym=%lx mask=%d type=%s", sym, mask,
 	    xkey->type == KeyPress ? "KeyPress" : "KeyRelease");
+#endif
 }
 
 static void

@@ -151,6 +151,8 @@ void toggle_sticky_stack(void);
 void highlight_stacks(int);
 void draw_stacks(void);
 void move_stack(int);
+void move_stack_left(void);
+void move_stack_right(void);
 
 void read_protocols(struct client *);
 void send_delete_window(struct client *);
