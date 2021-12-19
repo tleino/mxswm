@@ -72,15 +72,18 @@ set_font(int id)
 }
 
 void
-font_extents(const char *text, XGlyphInfo *extents)
+font_extents(const char *text, size_t len, XGlyphInfo *extents)
 {
 	XftTextExtentsUtf8(display(), current_font,
-	    (const FcChar8 *) text, strlen(text), extents);
+	    (const FcChar8 *) text, len, extents);
 }
 
-void
+int
 draw_font(Window window, int x, int y, const char *text)
 {
+	XGlyphInfo extents;
+	size_t len;
+
 	if (ftdraw == NULL)
 		if ((ftdraw = XftDrawCreate(display(), window,
 		    DefaultVisual(display(), DefaultScreen(display())),
@@ -91,8 +94,13 @@ draw_font(Window window, int x, int y, const char *text)
 	if (XftDrawDrawable(ftdraw) != window)
 		XftDrawChange(ftdraw, window);
 
+	len = strlen(text);
+	font_extents(text, len, &extents);
+
 	XftDrawStringUtf8(ftdraw, &ftcolor, current_font, x,
-	    y + current_font->ascent, (const FcChar8 *) text, strlen(text));
+	    y + current_font->ascent, (const FcChar8 *) text, len);
+
+	return extents.xOff;
 }
 
 static XftFont *

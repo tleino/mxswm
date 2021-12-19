@@ -224,8 +224,8 @@ void bind_keys();
 void set_font_color(int);
 void set_font(int);
 int get_font_height(void);
-void draw_font(Window, int, int, const char *);
-void font_extents(const char *, XGlyphInfo *);
+int draw_font(Window, int, int, const char *);
+void font_extents(const char *, size_t, XGlyphInfo *);
 
 XColor query_color(int);
 

@@ -259,7 +259,7 @@ draw_global_menu()
 	if (client != NULL)
 		name = client_name(client);
 	if (name == NULL)
-		name = "???";
+		name = "<no name>";
 
 	is_last = (next_client(client, NULL) == NULL);
 	is_first = (client == next_client(NULL, NULL));
@@ -280,7 +280,7 @@ draw_menu()
 	struct stack *stack = current_stack();
 	char buf[256], flags[10];
 	int row_height;
-	int y;
+	int y, x;
 	size_t nclients;
 	XGlyphInfo extents;
 
@@ -305,9 +305,8 @@ draw_menu()
 	set_font(FONT_NORMAL);
 	row_height = get_font_height();
 
-	XMoveResizeWindow(display(), _menu, STACK_X(stack), BORDERWIDTH,
+	XMoveResizeWindow(display(), _menu, STACK_X(stack), row_height,
 	    STACK_WIDTH(stack), nclients * row_height);
-	XClearWindow(display(), _menu);
 
 	XRaiseWindow(display(), _menu);
 
@@ -318,9 +317,9 @@ draw_menu()
 		if (name == NULL)
 			name = "???";
 
-		snprintf(buf, sizeof(buf), "%s", name);
+		snprintf(buf, sizeof(buf), " %s ", name);
 
-		snprintf(flags, sizeof(flags), "%d%c%c%c%c",
+		snprintf(flags, sizeof(flags), "%d%c%c%c%c ",
 		    client->stack ? client->stack->num : 0,
 		    (cclient == client) ? '*' : '-',
 		    client->flags & CF_HAS_TAKEFOCUS ? 't' : '-',
@@ -335,11 +334,18 @@ draw_menu()
 		} else
 			set_font_color(COLOR_MENU_FG_NORMAL);
 
-		draw_font(_menu, 0, y, buf);
+		XClearArea(display(), _menu, 0, y, STACK_WIDTH(stack),
+		    get_font_height(), False);
+		x = draw_font(_menu, 0, y, buf);
 
 		set_font_color(COLOR_FLAGS);
-		font_extents(flags, &extents);
-		draw_font(_menu, STACK_WIDTH(stack) - extents.width, y, flags);
+		font_extents(flags, strlen(flags), &extents);
+
+		if (x > STACK_WIDTH(stack) - extents.xOff)
+			x = STACK_WIDTH(stack) - extents.xOff;
+		XClearArea(display(), _menu, x, y, STACK_WIDTH(stack) - x,
+		    get_font_height(), False);
+		draw_font(_menu, STACK_WIDTH(stack) - extents.xOff, y, flags);
 
 		y += row_height;
 	}

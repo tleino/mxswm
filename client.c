@@ -335,15 +335,16 @@ resize_client(struct client *client)
 	if (stack == NULL)
 		stack = current_stack();
 
+	set_font(FONT_TITLE);
 	TRACE_LOG("resize to %dx%d+%d+%d",
 	    STACK_WIDTH(stack), STACK_HEIGHT(stack), STACK_X(stack),
-	    STACK_Y(stack) + BORDERWIDTH);
+	    STACK_Y(stack) + get_font_height());
 
 	window = client->window;
 
 	xwcm = (CWX | CWY | CWWidth | CWHeight | CWBorderWidth);
 	xwc.x = STACK_X(stack);
-	xwc.y = STACK_Y(stack) + BORDERWIDTH;
+	xwc.y = STACK_Y(stack) + get_font_height();
 	xwc.width = STACK_WIDTH(stack);
 	xwc.height = STACK_HEIGHT(stack);
 	xwc.border_width = 0;

@@ -279,8 +279,9 @@ create_stack_titlebar(struct stack *stack)
 	dpy = display();
 
 	assert(BORDERWIDTH > 0);
+	set_font(FONT_NORMAL);
 	w = BORDERWIDTH;
-	h = BORDERWIDTH;
+	h = get_font_height();
 	x = BORDERWIDTH;
 	y = 0;
 	v = CWBackPixel | CWOverrideRedirect;
@@ -302,7 +303,8 @@ draw_stack(struct stack *stack)
 	struct client *client;
 	char buf[1024], flags[10];
 	size_t nclients;
-	XGlyphInfo buf_extents, flags_extents;
+	XGlyphInfo flags_extents;
+	int x;
 
 	if (stack == NULL || stack->hidden) {
 		TRACE_LOG("not drawing this stack...");
@@ -317,39 +319,43 @@ draw_stack(struct stack *stack)
 	if (!stack->mapped)
 		XMapWindow(dpy, stack->window);
 
-	XClearWindow(dpy, stack->window);
 	XRaiseWindow(dpy, stack->window);
 
 	set_font(FONT_TITLE);
 
 	if (_highlight && client != NULL && client->name != NULL)
-		snprintf(buf, sizeof(buf), "stack %d: %s", stack->num,
+		snprintf(buf, sizeof(buf), " stack %d: %s ", stack->num,
 		    client->name);
 	else if (_highlight)
-		snprintf(buf, sizeof(buf), "stack %d", stack->num);
+		snprintf(buf, sizeof(buf), " stack %d ", stack->num);
 	else if (client != NULL && client->name != NULL)
-		snprintf(buf, sizeof(buf), "%s", client->name);
+		snprintf(buf, sizeof(buf), " %s ", client->name);
 	else
 		buf[0] = '\0';
 
 	if (nclients > 1)
-		snprintf(flags, sizeof(flags), "+%zu", nclients-1);
+		snprintf(flags, sizeof(flags), "+%zu ", nclients-1);
 	else
 		flags[0] = '\0';
 
 	if (_highlight)
-		snprintf(flags, sizeof(flags), "%c%c",
+		snprintf(flags, sizeof(flags), "%c%c ",
 		    stack->sticky ? 's' : '-',
 		    stack->prefer_width ? 'w' : '-');
 
-	font_extents(buf, &buf_extents);
-	font_extents(flags, &flags_extents);
+	font_extents(flags, strlen(flags), &flags_extents);
 
+	XClearArea(display(), stack->window, 0, 0, stack->width,
+	    get_font_height(), False);
 	set_font_color(COLOR_TITLE_FG_NORMAL);
-	draw_font(stack->window, 0, 0, buf);
+	x = draw_font(stack->window, 0, 0, buf);
+	if (x > (stack->width - flags_extents.xOff))
+		x = (stack->width - flags_extents.xOff);
+	XClearArea(display(), stack->window, x, 0, stack->width - x,
+	    get_font_height(), False);
 
 	set_font_color(COLOR_FLAGS);
-	draw_font(stack->window, stack->width - flags_extents.width,
+	draw_font(stack->window, stack->width - flags_extents.xOff,
 	    0, flags);
 }
 
@@ -389,8 +395,9 @@ resize_stack(struct stack *stack, unsigned short width)
 	dpy = display();
 	stack->width = width;
 
+	set_font(FONT_TITLE);
 	XMoveResizeWindow(dpy, stack->window, stack->x, 0, stack->width,
-	    BORDERWIDTH);
+	    get_font_height());
 	resize_clients(stack);
 	draw_stack(stack);
 }
@@ -500,7 +507,8 @@ add_stack(struct stack *after)
 	if (stack == NULL)
 		return NULL;
 
-	stack->height = display_height() - BORDERWIDTH;
+	set_font(FONT_TITLE);
+	stack->height = display_height() - get_font_height();
 	stack->width = 0;
 	stack->x = 0;
 	stack->y = 0;
