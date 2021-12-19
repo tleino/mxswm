@@ -34,6 +34,8 @@ static void select_root_events(Display *);
 static int wm_rights_error(Display *, XErrorEvent *);
 static int manageable(Window, int *);
 
+char **Argv;
+
 static void
 select_root_events(Display *display)
 {
@@ -178,6 +180,11 @@ main(int argc, char *argv[])
 	XEvent event;
 	Display *dpy;
 	int ctlfd;
+
+	/*
+	 * Store argv so that we can restart the window manager.
+	 */
+	Argv = argv;
 
 	if (!setlocale(LC_CTYPE, "en_US.UTF-8") || !XSupportsLocale())
 		errx(1, "no locale support");

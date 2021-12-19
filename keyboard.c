@@ -19,6 +19,7 @@
 #include "mxswm.h"
 #include <X11/keysym.h>
 #include <err.h>
+#include <unistd.h>
 
 #define DONT_CHECK_MASK -1
 
@@ -36,6 +37,7 @@ static void control_off(void);
 static void control_on(void);
 static void win_on(void);
 void focus_next(void);
+static void restart(void);
 
 #ifdef TRACE
 static void dump_all(void);
@@ -149,6 +151,10 @@ static const struct binding binding[] = {
 		NULL, prompt_rename
 	},
 	{
+		XK_l, Mod4Mask,
+		NULL, restart
+	},
+	{
 		XK_h, Mod4Mask,
 		toggle_hide_other_stacks, NULL
 	},
@@ -168,6 +174,16 @@ dump_all()
 	dump_clients();
 }
 #endif
+
+static void
+restart()
+{
+	extern char **Argv;
+
+	XSync(display(), False);
+	execvp(*Argv, Argv);
+	warn("unable to restart");
+}
 
 static void
 control_off()
