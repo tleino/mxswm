@@ -304,7 +304,7 @@ draw_stack(struct stack *stack)
 {
 	Display *dpy;
 	struct client *client;
-	char buf[1024], flags[10];
+	char buf[1024], flags[10], num[10];
 	size_t nclients;
 	XGlyphInfo flags_extents;
 	int x;
@@ -326,31 +326,33 @@ draw_stack(struct stack *stack)
 
 	set_font(FONT_TITLE);
 
-	if (_highlight && client != NULL && client->name != NULL)
-		snprintf(buf, sizeof(buf), " stack %d: %s ", stack->num,
-		    client->name);
-	else if (_highlight)
-		snprintf(buf, sizeof(buf), " stack %d ", stack->num);
-	else if (client != NULL && client->name != NULL)
+	if (client != NULL && client->name != NULL)
 		snprintf(buf, sizeof(buf), " %s ", client->name);
 	else
 		buf[0] = '\0';
 
 	if (nclients > 1)
-		snprintf(flags, sizeof(flags), "+%zu ", nclients-1);
+		snprintf(num, sizeof(num), "+%zu", nclients-1);
 	else
-		flags[0] = '\0';
+		num[0] = '\0';
 
-	if (_highlight)
-		snprintf(flags, sizeof(flags), "%c%c ",
+	if (_highlight && stack == current_stack()) {
+		snprintf(flags, sizeof(flags), "%d%c%c %s ",
+		    stack->num,
 		    stack->sticky ? 's' : '-',
-		    stack->prefer_width ? 'w' : '-');
+		    stack->prefer_width ? 'w' : '-', num);
+	} else
+		snprintf(flags, sizeof(flags), " %s ", num);
+
+	if (_highlight && stack == current_stack() && !is_menu_visible())
+		set_font_color(COLOR_MENU_FG_FOCUS);
+	else
+		set_font_color(COLOR_TITLE_FG_NORMAL);
 
 	font_extents(flags, strlen(flags), &flags_extents);
 
 	XClearArea(display(), stack->window, 0, 0, stack->width,
 	    get_font_height(), False);
-	set_font_color(COLOR_TITLE_FG_NORMAL);
 	x = draw_font(stack->window, 0, 0, buf);
 	if (x > (stack->width - flags_extents.xOff))
 		x = (stack->width - flags_extents.xOff);

@@ -365,6 +365,7 @@ show_menu()
 		XMapWindow(display(), _menu);
 		_menu_visible = 1;
 		draw_menu();
+		draw_stack(current_stack());
 	} else
 		TRACE_LOG("ignore");
 }
@@ -377,6 +378,7 @@ hide_menu()
 		XUnmapWindow(display(), _menu);
 		_menu_visible = 0;
 		currentp = NULL;
+		draw_stack(current_stack());
 	} else
 		TRACE_LOG("ignore");
 }
