@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 	dpy = display();
 
 	if (argc >= 2)
-		if (strcasecmp(argv[1], "sync") == 0)
+		if (strcmp(argv[1], "sync") == 0)
 			XSynchronize(display(), True);
 
 	select_root_events(dpy);
