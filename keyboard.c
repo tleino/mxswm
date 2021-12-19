@@ -132,7 +132,11 @@ static const struct binding binding[] = {
 	},
 	{
 		XK_Tab, Mod4Mask,
-		NULL, open_prompt
+		NULL, prompt_command
+	},
+	{
+		XK_space, Mod4Mask,
+		NULL, prompt_rename
 	},
 	{
 		XK_h, Mod4Mask,

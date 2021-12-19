@@ -28,7 +28,28 @@
 static struct client *_head;
 static struct client *_focus;
 
-static void try_utf8_name(struct client *);
+static void	 try_utf8_name(struct client *);
+int		 set_utf8_property(Window, Atom, const char *);
+
+int
+set_utf8_property(Window window, Atom atom, const char *text)
+{
+	XTextProperty prop;
+	char *list;
+	int ret;
+
+	list = strdup(text);
+	if (list == NULL)
+		return 0;
+
+	if ((ret = Xutf8TextListToTextProperty(display(), &list, 1,
+	    XUTF8StringStyle, &prop)) == Success)
+		XSetTextProperty(display(), window, &prop, atom);
+
+	free(list);
+
+	return ret;
+}
 
 int
 get_utf8_property(Window window, Atom atom, char **text)
@@ -72,6 +93,12 @@ try_utf8_name(struct client *client)
 
 	if (client->name != NULL)
 		TRACE_LOG("Got client name: '%s'", client->name);
+}
+
+void
+set_client_name(struct client *client, const char *u8)
+{
+	set_utf8_property(client->window, wmh[_NET_WM_NAME], u8);
 }
 
 void

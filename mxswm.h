@@ -182,6 +182,7 @@ struct client *find_top_client(struct stack *);
 void unmap_clients(struct stack *);
 void map_clients(struct stack *);
 void update_client_name(struct client *);
+void set_client_name(struct client *, const char *);
 void delete_client(void);
 void destroy_client(void);
 
@@ -230,7 +231,8 @@ XColor query_color(int);
 
 Time current_event_timestamp(void);
 
-void open_prompt(void);
+void prompt_command(void);
+void prompt_rename(void);
 
 #ifdef TRACE
 struct client *event_client();
