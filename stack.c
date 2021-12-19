@@ -322,7 +322,10 @@ draw_stack(struct stack *stack)
 
 	set_font(FONT_TITLE);
 
-	if (_highlight)
+	if (_highlight && client != NULL && client->name != NULL)
+		snprintf(buf, sizeof(buf), "stack %d: %s", stack->num,
+		    client->name);
+	else if (_highlight)
 		snprintf(buf, sizeof(buf), "stack %d", stack->num);
 	else if (client != NULL && client->name != NULL)
 		snprintf(buf, sizeof(buf), "%s", client->name);
