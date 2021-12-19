@@ -104,10 +104,16 @@ open_prompt(const char *initial, PromptCallback _callback, void *udata)
 
 	if (window == 0)
 		window = create_prompt();
+
+	set_font(FONT_TITLE);
+	XMoveResizeWindow(display(), window, STACK_X(current_stack()),
+	    STACK_Y(current_stack()), STACK_WIDTH(current_stack()),
+	    get_font_height());
 	XRaiseWindow(display(), window);
 	XMapWindow(display(), window);
 	draw_prompt();
 
+	XSync(display(), False);
 	XGrabKeyboard(display(), window, True, GrabModeAsync, GrabModeAsync,
 	    CurrentTime);
 
