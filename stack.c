@@ -248,10 +248,13 @@ find_stack_xy(unsigned short x, unsigned short y)
 {
 	struct stack *np;
 
-	for (np = _head; np != NULL; np = np->next)
+	for (np = _head; np != NULL; np = np->next) {
+		if (np->hidden == 1)
+			continue;
 		if (x >= np->x && x < np->x + np->width &&
 		    y >= np->y && y < np->y + np->height)
 			return np;
+	}
 
 	return NULL;
 }
