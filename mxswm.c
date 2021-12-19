@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <locale.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBrules.h>
@@ -183,6 +184,11 @@ main(int argc, char *argv[])
 	mbtowc(NULL, NULL, MB_CUR_MAX);
 
 	dpy = display();
+
+	if (argc >= 2)
+		if (strcasecmp(argv[1], "sync") == 0)
+			XSynchronize(display(), True);
+
 	select_root_events(dpy);
 
 	capture_existing_windows(dpy);

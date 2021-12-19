@@ -84,6 +84,21 @@ Set first stack's width to 200px:
 * Practically none on a standard Unix/Linux system that uses
 X11 Window System.
 
+## Debugging
+
+Enable synchronized (slow) behavior that help in debugging X11 errors.
+
+	$ mxswm sync
+
+By default mxswm does not have an error handler for X11 errors which makes
+mxswm crash when getting unexpected client behavior. This is so that the
+errors can be fixed from mxswm-side so that *mxswm* becomes robust and does
+not need error handler for these sort of things. **Help is wanted** in
+running *mxswm* with various client programs.
+
+You can also add -DTRACE to CFLAGS in Makefile for getting debug messages.
+When reporting bugs, sending the -DTRACE output would be good.
+
 ## Files
 
 * *~/.mxswm_socket* For runtime configuration using mxswmctl
