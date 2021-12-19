@@ -49,10 +49,17 @@ current(struct stack *stack)
 	return currentp;
 }
 
+int
+menu_has_highlight()
+{
+	return _highlight;
+}
+
 void
 highlight_menu(int i)
 {
 	_highlight = i;
+	draw_stack(current_stack());
 	draw_menu();
 }
 

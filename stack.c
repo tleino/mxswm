@@ -344,7 +344,10 @@ draw_stack(struct stack *stack)
 	} else
 		snprintf(flags, sizeof(flags), " %s ", num);
 
-	if (_highlight && stack == current_stack() && !is_menu_visible())
+	if (menu_has_highlight() && _highlight && stack == current_stack() &&
+	    !is_menu_visible())
+		set_font_color(COLOR_MENU_FG_HIGHLIGHT);
+	else if (_highlight && stack == current_stack() && !is_menu_visible())
 		set_font_color(COLOR_MENU_FG_FOCUS);
 	else
 		set_font_color(COLOR_TITLE_FG_NORMAL);

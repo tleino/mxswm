@@ -216,6 +216,7 @@ void show_menu(void);
 void hide_menu(void);
 int is_menu_visible(void);
 void highlight_menu(int);
+int menu_has_highlight(void);
 
 void do_keyaction(XKeyEvent *);
 void unbind_keys();
