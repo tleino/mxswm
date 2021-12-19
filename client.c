@@ -154,9 +154,11 @@ destroy_client()
 }
 
 struct client *
-add_client(Window window, struct client *after, int mapped)
+add_client(Window window, struct client *after, int mapped,
+    struct stack *stack, int dont_focus)
 {
 	struct client *client;
+	XWindowAttributes a;
 
 	TRACE_LOG("%lx mapped=%d", window, mapped);
 	client = calloc(1, sizeof(struct client));
@@ -165,7 +167,24 @@ add_client(Window window, struct client *after, int mapped)
 
 	client->window = window;
 	client->name = NULL;
-	client->stack = current_stack();
+
+	/*
+	 * If no stack was given, find stack based on the client position,
+	 * default to current stack if problems.
+	 */
+	if (stack == NULL) {
+		if (!XGetWindowAttributes(display(), client->window, &a)) {
+			warnx("XGetWindowAttributes failed for %lx",
+			    client->window);
+			stack = current_stack();
+		} else {
+			stack = find_stack_xy(a.x, a.y);
+			if (stack == NULL)
+				stack = current_stack();
+		}
+	}
+	client->stack = stack;
+
 	assert(mapped == 0 || mapped == 1);
 	client->mapped = mapped;
 
@@ -193,7 +212,10 @@ add_client(Window window, struct client *after, int mapped)
 	if (mapped) {
 		read_protocols(client);
 		update_client_name(client);
-		focus_client(client, NULL);
+		if (!dont_focus)
+			focus_client(client, stack);
+		else
+			draw_stack(stack);
 		draw_menu();
 	} else
 		client->flags |= CF_FOCUS_WHEN_MAPPED;

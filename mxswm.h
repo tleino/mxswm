@@ -166,7 +166,7 @@ void dump_stacks(void);
 #define dump_stack(x) do { } while(0)
 #endif
 
-struct client *add_client(Window, struct client *, int);
+struct client *add_client(Window, struct client *, int, struct stack *, int);
 struct client *have_client(Window);
 void remove_client(struct client *);
 void top_client(struct client *);

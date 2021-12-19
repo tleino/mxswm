@@ -83,7 +83,8 @@ capture_existing_windows(Display *display)
 	for (i = 0; i < nchildren; i++) {
 		if (manageable(children[i], &mapped)) {
 			TRACE_LOG("capture %lx", children[i]);
-			if (add_client(children[i], NULL, mapped) == NULL)
+			if (add_client(children[i], NULL, mapped, NULL, 1) ==
+			    NULL)
 				warn("add_client");
 		} else
 			warnx("did not capture %lx", children[i]);
@@ -191,8 +192,6 @@ main(int argc, char *argv[])
 
 	select_root_events(dpy);
 
-	capture_existing_windows(dpy);
-
 	dump_clients();
 
 	dump_stacks();
@@ -200,6 +199,13 @@ main(int argc, char *argv[])
 	bind_keys();
 
 	run_ctl_lines();
+
+	resize_stacks();
+
+	capture_existing_windows(dpy);
+
+	focus_stack(find_stack(1));
+
 #if WANT_CTLSOCKET
 	ctlfd = listen_ctlsocket();
 #else

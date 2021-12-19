@@ -362,7 +362,8 @@ handle_event(XEvent *event)
 		    is_input_only(window))
 			TRACE_LOG("ignore");
 		else {
-			client = add_client(window, NULL, 0);
+			client = add_client(window, NULL, 0, current_stack(),
+			    0);
 			if (client == NULL)
 				warn("add_client");
 			TRACE_LOG("created");
