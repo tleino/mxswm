@@ -36,7 +36,7 @@ static struct client *
 current(struct stack *stack)
 {
 	if (currentp == NULL) {
-		currentp = next_client(NULL, stack);
+		currentp = next_client(current_client(), stack);
 		return currentp;
 	}
 
@@ -145,7 +145,7 @@ move_menu_item(int dir)
 
 	if (_menu_visible) {
 		currentp = NULL;
-		draw_menu();
+		close_menu();
 	}
 }
 
@@ -292,6 +292,8 @@ draw_menu()
 
 	client = NULL;
 	nclients = count_clients(stack);
+	if (nclients > 0)
+		nclients--;
 
 	if (nclients == 0) {
 		TRACE_LOG("zero clients, closing menu");
@@ -310,7 +312,7 @@ draw_menu()
 
 	XRaiseWindow(display(), _menu);
 
-	client = NULL;
+	client = current_client();
 	y = 0;
 	while ((client = next_client(client, stack)) != NULL) {
 		name = client_name(client);
