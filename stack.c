@@ -219,19 +219,21 @@ void
 toggle_hide_other_stacks()
 {
 	struct stack *np;
+	struct stack *current;
 
 	TRACE_LOG("*");
 
+	current = current_stack();
 	for (np = _head; np != NULL; np = np->next) {
 		if (np->sticky)
 			np->hidden = 0;
 		else
 			np->hidden ^= 1;
 	}
-	if (current_stack()->sticky)
-		current_stack()->hidden = 0;
+	if (current->sticky)
+		current->hidden = 0;
 	else
-		current_stack()->hidden ^= 1;
+		current->hidden ^= 1;
 
 	for (np = _head; np != NULL; np = np->next)
 		if (np->hidden)
@@ -664,6 +666,11 @@ current_stack()
 		if (_focus == NULL)
 			err(1, "add_stack");
 		focus_stack(_focus);
+	}
+	if (_focus && _focus->hidden) {
+		_focus = next_stack(_focus);
+		if (_focus == NULL)
+			_focus = first_stack();
 	}
 
 	assert(_focus != NULL);
