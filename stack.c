@@ -356,7 +356,7 @@ draw_stack(struct stack *stack)
 
 	XClearArea(display(), stack->window, 0, 0, stack->width,
 	    get_font_height(), False);
-	x = draw_font(stack->window, 0, 0, buf);
+	x = draw_font(stack->window, 0, 0, -1, buf);
 	if (x > (stack->width - flags_extents.xOff))
 		x = (stack->width - flags_extents.xOff);
 	XClearArea(display(), stack->window, x, 0, stack->width - x,
@@ -364,7 +364,7 @@ draw_stack(struct stack *stack)
 
 	set_font_color(COLOR_FLAGS);
 	draw_font(stack->window, stack->width - flags_extents.xOff,
-	    0, flags);
+	    0, -1, flags);
 }
 
 void

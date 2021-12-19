@@ -4,4 +4,5 @@ TITLE_FG_NORMAL   white
 MENU_FG_NORMAL    white
 MENU_FG_FOCUS     purple
 MENU_FG_HIGHLIGHT blue
+CURSOR            red
 FLAGS             blue

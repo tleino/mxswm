@@ -143,6 +143,7 @@ close_prompt()
 {
 	XUngrabKeyboard(display(), CurrentTime);
 	XUnmapWindow(display(), window);
+	XFlush(display());
 }
 
 static int
@@ -218,6 +219,7 @@ static void
 draw_prompt()
 {
 	char s[4096];
+	XGlyphInfo extents;
 
 	XClearWindow(display(), window);
 
@@ -225,5 +227,8 @@ draw_prompt()
 
 	TRACE_LOG("s is: %s", s);
 
-	draw_font(window, 0, 0, s);
+	font_extents(s, strlen(s), &extents);
+
+	draw_font(window, 0, 0, -1, s);
+	draw_font(window, extents.xOff, 0, COLOR_CURSOR, " ");
 }

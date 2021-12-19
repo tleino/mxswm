@@ -276,7 +276,7 @@ draw_global_menu()
 
 	set_font_color(COLOR_MENU_FG_NORMAL);
 	set_font(FONT_NORMAL);
-	draw_font(_global_menu, 0, 0, buf);
+	draw_font(_global_menu, 0, 0, -1, buf);
 }
 
 void
@@ -343,7 +343,7 @@ draw_menu()
 
 		XClearArea(display(), _menu, 0, y, STACK_WIDTH(stack),
 		    get_font_height(), False);
-		x = draw_font(_menu, 0, y, buf);
+		x = draw_font(_menu, 0, y, -1, buf);
 
 		set_font_color(COLOR_FLAGS);
 		font_extents(flags, strlen(flags), &extents);
@@ -352,7 +352,8 @@ draw_menu()
 			x = STACK_WIDTH(stack) - extents.xOff;
 		XClearArea(display(), _menu, x, y, STACK_WIDTH(stack) - x,
 		    get_font_height(), False);
-		draw_font(_menu, STACK_WIDTH(stack) - extents.xOff, y, flags);
+		draw_font(_menu, STACK_WIDTH(stack) - extents.xOff, y, -1,
+		    flags);
 
 		y += row_height;
 	}

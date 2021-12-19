@@ -79,10 +79,12 @@ font_extents(const char *text, size_t len, XGlyphInfo *extents)
 }
 
 int
-draw_font(Window window, int x, int y, const char *text)
+draw_font(Window window, int x, int y, int bgcolor, const char *text)
 {
 	XGlyphInfo extents;
 	size_t len;
+	XftColor ftbg;
+	XColor xcolor;
 
 	if (ftdraw == NULL)
 		if ((ftdraw = XftDrawCreate(display(), window,
@@ -96,6 +98,19 @@ draw_font(Window window, int x, int y, const char *text)
 
 	len = strlen(text);
 	font_extents(text, len, &extents);
+
+	if (bgcolor != -1) {
+		xcolor = query_color(bgcolor);
+
+		ftbg.pixel = xcolor.pixel;
+		ftbg.color.red = xcolor.red;
+		ftbg.color.green = xcolor.green;
+		ftbg.color.blue = xcolor.blue;
+		ftbg.color.alpha = USHRT_MAX;
+
+		XftDrawRect(ftdraw, &ftbg, x, y, extents.xOff,
+		    current_font->height);
+	}
 
 	XftDrawStringUtf8(ftdraw, &ftcolor, current_font, x,
 	    y + current_font->ascent, (const FcChar8 *) text, len);
