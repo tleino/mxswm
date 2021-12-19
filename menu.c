@@ -36,7 +36,6 @@ static struct client *
 current(struct stack *stack)
 {
 	if (currentp == NULL) {
-		currentp = next_client(current_client(), stack);
 		return currentp;
 	}
 
@@ -354,7 +353,7 @@ show_menu()
 	TRACE_LOG("*");
 	if (_menu == 0)
 		create_menu();
-	currentp = NULL;
+	currentp = next_client(current_client(), current_stack());
 	if (!_menu_visible) {
 		TRACE_LOG("map menu window %lx", _menu);
 		XMapWindow(display(), _menu);
@@ -386,7 +385,7 @@ focus_menu_backward()
 
 	client = current(current_stack());
 	currentp = prev_client(client, current_stack());
-	if (currentp == NULL) {
+	if (currentp == NULL || currentp == current_client()) {
 		hide_menu();
 		return;
 	}
