@@ -79,10 +79,10 @@ hide_stack(struct stack *stack)
 static void
 show_stack(struct stack *stack)
 {
-	map_clients(stack);
 	resize_clients(stack);
 	if (!stack->mapped)
 		XMapWindow(display(), stack->window);
+	map_clients(stack);
 }
 
 static struct stack *

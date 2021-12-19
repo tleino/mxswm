@@ -276,8 +276,11 @@ handle_event(XEvent *event)
 			} else if (client->mapped &&
 			    client->stack == current_stack()) {
 				focus_client(client, client->stack);
+			} else if (client->mapped && client->stack != NULL) {
+				draw_stack(client->stack);
 			} else if (client->mapped && client->stack == NULL) {
 				client->stack = current_stack();
+				draw_stack(client->stack);
 			} else if (client->mapped == 0) {
 				stack = client->stack;
 				CLIENT_STACK(client) = NULL;
