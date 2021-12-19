@@ -333,7 +333,7 @@ draw_stack(struct stack *stack)
 		buf[0] = '\0';
 
 	if (nclients > 1)
-		snprintf(flags, sizeof(flags), "+%zu", nclients);
+		snprintf(flags, sizeof(flags), "+%zu", nclients-1);
 	else
 		flags[0] = '\0';
 
