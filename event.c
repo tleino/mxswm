@@ -215,14 +215,11 @@ handle_event(XEvent *event)
 		 * click-to-focus based on the current focus state and
 		 * click location.
 		 */
-		if (stack != NULL && current_stack() != stack) {
-			XAllowEvents(display(), SyncPointer, CurrentTime);
-			TRACE_LOG("focus");
+		if (stack != NULL && current_stack() != stack)
 			focus_stack(stack);
-		} else {
-			XAllowEvents(display(), ReplayPointer, CurrentTime);
+		else
 			TRACE_LOG("ignore");
-		}
+		XAllowEvents(display(), ReplayPointer, CurrentTime);
 		break;
 	case KeyRelease:
 	case KeyPress:
