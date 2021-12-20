@@ -53,12 +53,17 @@ clean:
 install: $(PROG)
 	if [ ! -x $(DESTDIR)$(bindir) ] ; then \
 		mkdir -p $(DESTDIR)$(bindir) ; fi
+	if [ ! -x $(DESTDIR)$(mandir)/man1 ] ; then \
+		mkdir -p $(DESTDIR)$(mandir)/man1 ; fi
 	$(INSTALL) $(INSTALLFLAGS) $(PROG) $(DESTDIR)$(bindir)
+	$(INSTALL) $(INSTALLFLAGS) -m 444 mxswm.1 \
+		$(DESTDIR)$(mandir)/man1/mxswm.1
 	make -C mxswmctl install
 
 uninstall:
 	if [ -e $(DESTDIR)$(bindir)/$(PROG) ] ; then \
 		rm $(DESTDIR)$(bindir)/$(PROG) ; fi
+	rm -f $(DESTDIR)$(mandir)/man1/mxswm.1
 	make -C mxswmctl uninstall
 
 .PHONY: mxswmctl

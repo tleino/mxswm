@@ -1,0 +1,91 @@
+.\"
+.\" ISC License
+.\"
+.\" Copyright (c) 2021, Tommi Leino <namhas@gmail.com>
+.\"
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: Dec 20 2021 $
+.Dt mxswm 1
+.Os
+.Sh NAME
+.Nm mxswm
+.Nd MaXed Stacks Window Manager for X11
+.Sh SYNOPSIS
+.Nm
+.Op sync
+.Sh DESCRIPTION
+.Nm
+is a window manager which keeps windows in a number of stacks of same
+size and allows control using keyboard.
+.Pp
+.Nm
+supports the following key bindings by default:
+.Bl -tag -width Ds
+.It F1/F2
+Remove/add window stack.
+.It F3
+Toggle overriding maxwidth setting.
+.It WIN+Left/Right
+Select stack on the left/right.
+.It SHIFT+WIN+Left/Right
+Move current stack to the left/right.
+.It WIN+s
+Toggle sticky status for stack.
+.It WIN+h
+Toggle hide other stacks (not counting sticky stacks).
+.It WIN+Tab
+Run command in this stack.
+.It WIN+Menu
+Cycle to next client in any stack.
+.It WIN+Down/Up
+Open menu or select client / raise selected client in the menu.
+.It WIN+q
+Delete client.
+.It WIN+k
+Destroy client forcibly (should not be used unless desperate).
+.It CTRL+WIN+Left/Right
+Move selected client to stack on the left/right.
+.It WIN+Space
+Rename current client.
+.It BackSpace
+Delete character in the prompt.
+.It Esc
+Exit prompt without submitting.
+.It WIN+a
+Dump stack and client information to trace log.
+.It WIN+l
+Restart window manager.
+.El
+.SH FILES
+.PP
+.nf
+.I $HOME/.mxswmrc
+.fi
+.Sh ENVIRONMENT VARIABLES
+.Bl -tag -width Ds
+.It DISPLAY
+This variable is used to determine which X server to use.
+It is also set
+during "run command function" so that programs come up on
+the proper screen.
+.It HOME
+This variable is used as the prefix for files that begin with a tilde and
+for locating the
+.Nm
+startup file.
+.El
+.Sh SEE ALSO
+.Xr mxswmctl 1
+.Sh AUTHOR
+Tommi Leino, see https://github.com/tleino/ and https://namhas.dev/ .
