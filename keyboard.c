@@ -38,6 +38,7 @@ static void control_on(void);
 static void win_on(void);
 void focus_next(void);
 static void restart(void);
+static void quit(void);
 
 #ifdef TRACE
 static void dump_all(void);
@@ -155,6 +156,10 @@ static const struct binding binding[] = {
 		NULL, restart
 	},
 	{
+		XK_q, Mod4Mask | ShiftMask,
+		NULL, quit
+	},
+	{
 		XK_h, Mod4Mask,
 		toggle_hide_other_stacks, NULL
 	},
@@ -183,6 +188,14 @@ restart()
 	XSync(display(), False);
 	execvp(*Argv, Argv);
 	warn("unable to restart");
+}
+
+static void
+quit()
+{
+	extern int running;
+
+	running = 0;
 }
 
 static void

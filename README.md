@@ -72,6 +72,7 @@ maximums, or for setting the width for 80 column terminals).
 * **Win+a** Dump stack and client information to trace log
 * **Win+l** Restart window manager (useful e.g. for testing .mxswmrc
 or after code modifications)
+* **Win+Shift+q** Exit
 
 ## Build
 

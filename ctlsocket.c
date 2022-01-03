@@ -38,6 +38,8 @@ static void accept_ctl_client(int);
 static int clientfd[128];
 static int nclients;
 
+int running;
+
 int
 listen_ctlsocket()
 {
@@ -162,7 +164,8 @@ run_ctlsocket_event_loop(int ctlfd)
 	nclients = 0;
 
 	process_xevents();
-	for (;;) {
+	running = 1;
+	while (running) {
 		FD_ZERO(&rfds);
 		FD_SET(xfd, &rfds);
 		maxfd = xfd;
