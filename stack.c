@@ -320,7 +320,7 @@ draw_stack(struct stack *stack)
 	char buf[1024], flags[10], num[10];
 	size_t nclients;
 	XGlyphInfo flags_extents;
-	int x;
+	int num_xoff;
 
 	if (stack == NULL || stack->hidden) {
 		TRACE_LOG("not drawing this stack...");
@@ -344,19 +344,30 @@ draw_stack(struct stack *stack)
 	else
 		buf[0] = '\0';
 
-	if (nclients > 1)
-		snprintf(num, sizeof(num), "+%zu", nclients-1);
-	else
-		num[0] = '\0';
+	snprintf(num, sizeof(num), " %zu ", nclients);
 
-	if (_highlight && stack == current_stack()) {
-		snprintf(flags, sizeof(flags), "%d%c%c %s ",
+	if (_highlight && stack == current_stack())
+		snprintf(flags, sizeof(flags), " %d%c%c ",
 		    stack->num,
 		    stack->sticky ? 's' : '-',
-		    stack->prefer_width ? 'w' : '-', num);
-	} else
-		snprintf(flags, sizeof(flags), " %s ", num);
+		    stack->prefer_width ? 'w' : '-');
+	else
+		flags[0] = '\0';
 
+	font_extents(flags, strlen(flags), &flags_extents);
+
+	XClearArea(display(), stack->window, 0, 0, stack->width,
+	    get_font_height(), False);
+
+	/*
+	 * Draw number of clients in the stack.
+	 */
+	set_font_color(COLOR_TITLE_FG_NORMAL);
+	num_xoff = draw_font(stack->window, 0, 0, COLOR_TITLE_BG_NUMBER, num);
+
+	/*
+	 * Draw top client title.
+	 */
 	if (menu_has_highlight() && _highlight && stack == current_stack() &&
 	    !is_menu_visible())
 		set_font_color(COLOR_MENU_FG_HIGHLIGHT);
@@ -365,19 +376,14 @@ draw_stack(struct stack *stack)
 	else
 		set_font_color(COLOR_TITLE_FG_NORMAL);
 
-	font_extents(flags, strlen(flags), &flags_extents);
+	(void) draw_font(stack->window, num_xoff, 0, -1, buf);
 
-	XClearArea(display(), stack->window, 0, 0, stack->width,
-	    get_font_height(), False);
-	x = draw_font(stack->window, 0, 0, -1, buf);
-	if (x > (stack->width - flags_extents.xOff))
-		x = (stack->width - flags_extents.xOff);
-	XClearArea(display(), stack->window, x, 0, stack->width - x,
-	    get_font_height(), False);
-
-	set_font_color(COLOR_FLAGS);
+	/*
+	 * Draw stack flags.
+	 */
+	set_font_color(COLOR_TITLE_FG_NORMAL);
 	draw_font(stack->window, stack->width - flags_extents.xOff,
-	    0, -1, flags);
+	    0, COLOR_TITLE_BG_NUMBER, flags);
 }
 
 void
