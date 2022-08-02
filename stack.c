@@ -309,6 +309,7 @@ create_stack_titlebar(struct stack *stack)
 	    InputOutput, CopyFromParent,
 	    v, &a);
 
+	XSelectInput(dpy, stack->window, ExposureMask);
 	XMapWindow(dpy, stack->window);
 }
 

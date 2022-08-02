@@ -205,6 +205,12 @@ handle_event(XEvent *event)
 	window = 0;
 
 	switch (event->type) {
+	case Expose:
+		window = event->xexpose.window;
+		stack = have_stack(window);
+		if (stack != NULL)
+			draw_stack(stack);
+		break;
 	case ButtonPress:
 		window = event->xbutton.window;
 		timestamp = event->xbutton.time;
