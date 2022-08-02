@@ -383,7 +383,7 @@ draw_stack(struct stack *stack)
 	 */
 	set_font_color(COLOR_TITLE_FG_NORMAL);
 	draw_font(stack->window, stack->width - flags_extents.xOff,
-	    0, COLOR_TITLE_BG_NUMBER, flags);
+	    0, -1, flags);
 }
 
 void
