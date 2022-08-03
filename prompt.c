@@ -66,7 +66,7 @@ rename_callback(const char *s, void *udata)
 {
 	struct client *client = udata;
 
-	set_client_name(client, s);
+	rename_client_name(client, s);
 }
 
 void

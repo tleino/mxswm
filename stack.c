@@ -340,7 +340,9 @@ draw_stack(struct stack *stack)
 
 	set_font(FONT_TITLE);
 
-	if (client != NULL && client->name != NULL)
+	if (client != NULL && client->renamed_name != NULL)
+		snprintf(buf, sizeof(buf), " %s ", client->renamed_name);
+	else if (client != NULL && client->name != NULL)
 		snprintf(buf, sizeof(buf), " %s ", client->name);
 	else
 		buf[0] = '\0';

@@ -60,7 +60,7 @@ maximums, or for setting the width for 80 column terminals).
 * **Win+k** Destroy client forcibly (rarely needed / should not be used)
 * **Ctrl+Win+Left** Move selected client to stack on the left
 * **Ctrl+Win+Right** Move selected client to stack on the right
-* **Win+Space** Rename current client
+* **Win+Space** Rename current client's title (or reset to original)
 
 ### Prompt
 

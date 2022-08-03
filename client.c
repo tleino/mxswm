@@ -29,6 +29,7 @@ static struct client *_head;
 static struct client *_focus;
 
 static void	 try_utf8_name(struct client *);
+static void	 try_utf8_renamed_name(struct client *);
 int		 set_utf8_property(Window, Atom, const char *);
 
 int
@@ -82,6 +83,19 @@ get_utf8_property(Window window, Atom atom, char **text)
 }
 
 static void
+try_utf8_renamed_name(struct client *client)
+{
+	if (client->renamed_name) {
+		free(client->renamed_name);
+		client->renamed_name = NULL;
+	}
+	get_utf8_property(client->window, wmh[_NET_WM_VISIBLE_NAME],
+		&client->renamed_name);
+	if (client->renamed_name != NULL)
+		TRACE_LOG("got renamed name: '%s'", client->renamed_name);
+}
+
+static void
 try_utf8_name(struct client *client)
 {
 	if (client->name) {
@@ -99,6 +113,28 @@ void
 set_client_name(struct client *client, const char *u8)
 {
 	set_utf8_property(client->window, wmh[_NET_WM_NAME], u8);
+}
+
+void
+rename_client_name(struct client *client, const char *u8)
+{
+	if (client->renamed_name != NULL) {
+		free(client->renamed_name);
+		client->renamed_name = NULL;
+	}
+
+	if (u8 == NULL || u8[0] == '\0' || strcmp(u8, client->name) == 0) {
+		TRACE_LOG("clear NET_WM_VISIBLE_NAME");
+		XDeleteProperty(display(), client->window,
+		    wmh[_NET_WM_VISIBLE_NAME]);
+		try_utf8_name(client);
+		return;
+	}
+
+	TRACE_LOG("set NET_WM_VISIBLE_NAME");
+	if ((client->renamed_name = strdup(u8)) == NULL)
+		warn("strdup");
+	set_utf8_property(client->window, wmh[_NET_WM_VISIBLE_NAME], u8);
 }
 
 void
@@ -212,6 +248,7 @@ add_client(Window window, struct client *after, int mapped,
 	if (mapped) {
 		read_protocols(client);
 		update_client_name(client);
+		try_utf8_renamed_name(client);
 		if (!dont_focus)
 			focus_client(client, stack);
 		else
@@ -299,6 +336,10 @@ remove_client(struct client *client)
 	if (client->name != NULL) {
 		free(client->name);
 		client->name = NULL;
+	}
+	if (client->renamed_name != NULL) {
+		free(client->renamed_name);
+		client->renamed_name = NULL;
 	}
 	free(client);
 

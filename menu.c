@@ -263,8 +263,11 @@ draw_global_menu()
 	XRaiseWindow(display(), _global_menu);
 
 	name = NULL;
-	if (client != NULL)
+	if (client != NULL && client->renamed_name != NULL)
+		name = client->renamed_name;
+	else if (client != NULL)
 		name = client_name(client);
+
 	if (name == NULL)
 		name = "<no name>";
 
@@ -320,7 +323,10 @@ draw_menu()
 	client = current_client();
 	y = 0;
 	while ((client = next_client(client, stack)) != NULL) {
-		name = client_name(client);
+		if (client->renamed_name != NULL)
+			name = client->renamed_name;
+		else
+			name = client_name(client);
 		if (name == NULL)
 			name = "???";
 

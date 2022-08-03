@@ -63,6 +63,7 @@ time_t start_time();
 enum ewmh {
 	WM_PROTOCOLS=0,
 	_NET_WM_NAME,
+	_NET_WM_VISIBLE_NAME,
 	UTF8_STRING,
 	NUM_WMH
 };
@@ -109,6 +110,7 @@ struct stack {
 struct client {
 	Window window;
 	char *name;
+	char *renamed_name;
 	int mapped;
 #define CF_HAS_TAKEFOCUS (1 << 0)
 #define CF_HAS_DELWIN (1 << 1)
@@ -183,6 +185,7 @@ void unmap_clients(struct stack *);
 void map_clients(struct stack *);
 void update_client_name(struct client *);
 void set_client_name(struct client *, const char *);
+void rename_client_name(struct client *, const char *);
 void delete_client(void);
 void destroy_client(void);
 
