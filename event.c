@@ -210,6 +210,8 @@ handle_event(XEvent *event)
 		stack = have_stack(window);
 		if (stack != NULL)
 			draw_stack(stack);
+		else if (is_statusbar(window))
+			draw_statusbar();
 		break;
 	case ButtonPress:
 		window = event->xbutton.window;
@@ -261,6 +263,17 @@ handle_event(XEvent *event)
 				}
 				break;
 			}
+		} else if (window == DefaultRootWindow(display())) {
+			switch (event->xproperty.atom) {
+			case XA_WM_NAME:
+				draw_statusbar();
+				break;
+			default:
+				if (event->xproperty.atom ==
+				    wmh[_NET_WM_NAME])
+					draw_statusbar();
+				break;
+			}
 		} else
 			TRACE_LOG("ignore");
 		break;
@@ -292,6 +305,9 @@ handle_event(XEvent *event)
 			}
 		} else if ((stack = have_stack(window)) != NULL)
 			stack->mapped = (event->type == MapNotify) ? 1 : 0;
+		else if (is_statusbar(window))
+			set_statusbar_mapped_status(
+			    (event->type == MapNotify) ? 1 : 0);
 		else
 			TRACE_LOG("ignore");
 		break;

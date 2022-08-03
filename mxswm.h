@@ -130,6 +130,8 @@ struct client {
 #define CLIENT_STACK(_x) (_x)->stack
 #define CLIENT_REAPPEAR_STACK(_x) (_x)->reappear
 
+int get_utf8_property(Window, Atom, char **);
+
 struct stack *add_stack(struct stack *);
 struct stack *have_stack(Window);
 void remove_stack(struct stack *);
@@ -137,6 +139,7 @@ void draw_stack(struct stack *);
 void add_stack_here(void);
 void remove_stack_here(void);
 void resize_stacks(void);
+void modify_stacks_height(int);
 void focus_stack(struct stack *);
 void focus_stack_forward(void);
 void focus_stack_backward(void);
@@ -220,6 +223,13 @@ void hide_menu(void);
 int is_menu_visible(void);
 void highlight_menu(int);
 int menu_has_highlight(void);
+
+void draw_statusbar(void);
+int is_statusbar(Window);
+void show_statusbar(void);
+void set_statusbar_mapped_status(int);
+void hide_statusbar(void);
+void toggle_statusbar(void);
 
 void do_keyaction(XKeyEvent *);
 void unbind_keys();

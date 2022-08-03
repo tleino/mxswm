@@ -29,6 +29,7 @@
 static struct stack *_head;
 static struct stack *_focus;
 static int _highlight;
+static int _stack_height;
 
 static void create_stack_titlebar(struct stack *);
 static int stack_width(int, int, int);
@@ -528,6 +529,18 @@ remove_stack_here()
 	(void)remove_stack(stack);
 }
 
+void
+modify_stacks_height(int height)
+{
+	struct stack *np;
+
+	_stack_height = height;
+	for (np = first_stack(); np != NULL; np = next_stack(np))
+		np->height = _stack_height;
+
+	resize_stacks();
+}
+
 struct stack *
 add_stack(struct stack *after)
 {
@@ -538,7 +551,9 @@ add_stack(struct stack *after)
 		return NULL;
 
 	set_font(FONT_TITLE);
-	stack->height = display_height() - get_font_height();
+	if (_stack_height == 0)
+		_stack_height = display_height() - get_font_height();
+	stack->height = _stack_height;
 	stack->width = 0;
 	stack->x = 0;
 	stack->y = 0;

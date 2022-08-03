@@ -47,7 +47,8 @@ select_root_events(Display *display)
 	             KeyReleaseMask |
 	             ButtonPressMask |
 	             ButtonReleaseMask |
-	             SubstructureRedirectMask);
+	             SubstructureRedirectMask |
+	             PropertyChangeMask);
 
 	/*
 	 * Enable click-to-focus.

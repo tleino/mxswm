@@ -67,6 +67,10 @@ maximums, or for setting the width for 80 column terminals).
 * **BackSpace** Delete character
 * **Esc** Exit prompt without submitting
 
+### Statusbar
+
+* **Win+t** Toggle display of root window title contents
+
 ### Debugging
 
 * **Win+a** Dump stack and client information to trace log

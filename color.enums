@@ -2,6 +2,8 @@ TITLE_BG_NORMAL   gray
 TITLE_BG_FOCUS    cornflower blue
 TITLE_FG_NORMAL   white
 TITLE_BG_NUMBER   gray30
+STATUSBAR_BG      gray30
+STATUSBAR_FG      white
 MENU_FG_NORMAL    white
 MENU_FG_FOCUS     purple
 MENU_FG_HIGHLIGHT blue

@@ -167,6 +167,10 @@ static const struct binding binding[] = {
 		XK_s, Mod4Mask,
 		NULL, toggle_sticky_stack
 	},
+	{
+		XK_t, Mod4Mask,
+		NULL, toggle_statusbar
+	}
 };
 
 static int menu;
