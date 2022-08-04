@@ -55,6 +55,7 @@ maximums, or for setting the width for 80 column terminals).
 
 * **Win+Tab** Cycle to previous clients in any stack
 * **Menu** Quickly focus previous client in any stack
+* **Win+f** Focus client by name
 * **Win+Down** Select client / raise selected client
 * **Win+Up** Select client / raise selected client
 * **Win+q** Delete client

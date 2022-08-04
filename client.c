@@ -24,6 +24,7 @@
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 static struct client *_head;
 static struct client *_focus;
@@ -345,6 +346,39 @@ remove_client(struct client *client)
 
 	TRACE_LOG("draw menu");
 	draw_menu();
+}
+
+struct client *
+match_client(const char *s)
+{
+	struct client *np;
+	struct client *best_match;
+	int best_pts, pts;
+	const char *p, *q;
+
+	best_match = NULL;
+	best_pts = 0;
+	for (np = _head; np != NULL; np = np->next)
+		if (np->name != NULL) {
+			q = s;
+			pts = 0;
+			p = np->renamed_name;
+			if (p == NULL)
+				p = np->name;
+			if (p == NULL)
+				p = "no name";
+			for (; *p != '\0' && *q != '\0'; p++)
+				if (tolower(*p) == tolower(*q++))
+					pts++;
+				else
+					break;
+			if (pts > best_pts) {
+				best_pts = pts;
+				best_match = np;
+			}
+		}
+
+	return best_match;
 }
 
 struct client *

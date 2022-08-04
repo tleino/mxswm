@@ -157,6 +157,10 @@ static const struct binding binding[] = {
 		NULL, prompt_rename
 	},
 	{
+		XK_f, Mod4Mask,
+		NULL, prompt_find
+	},
+	{
 		XK_l, Mod4Mask,
 		NULL, restart
 	},

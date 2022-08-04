@@ -32,18 +32,24 @@ static Window	 create_prompt(void);
 static void	 draw_prompt(void);
 static void	 close_prompt();
 static int	 keycode(XKeyEvent *);
-static void	 open_prompt(const char *, PromptCallback, void *);
+static void	 open_prompt(const char *, PromptCallback, PromptCallback,
+		    void *, int);
 
 static void	 command_callback(const char *, void *);
 static void	 rename_callback(const char *, void *);
+static void	 find_callback(const char *, void *);
+static void	 find_step_callback(const char *, void *);
 
 static Window window;
 static wchar_t prompt[4096];
 static size_t nprompt;
+static size_t pos;
+static int _want_centered;
 
 static XIC ic;
 
 static PromptCallback callback;
+static PromptCallback step_callback;
 static void *callback_udata;
 
 static void
@@ -69,11 +75,47 @@ rename_callback(const char *s, void *udata)
 	rename_client_name(client, s);
 }
 
+static void
+find_callback(const char *s, void *udata)
+{
+	struct client *client;
+
+	client = match_client(s);
+	if (client != NULL)
+		focus_client(client, client->stack);
+}
+
+static void
+find_step_callback(const char *s, void *udata)
+{
+	struct client *client;
+	char *q;
+
+	client = match_client(s);
+	if (client != NULL) {
+		q = client->renamed_name;
+		if (q == NULL)
+			q = client->name;
+		nprompt = mbstowcs(prompt, q, sizeof(prompt));
+		prompt[nprompt] = '\0';
+	} else if (s == NULL || s[0] == '\0') {
+		nprompt = 0;
+		prompt[nprompt] = '\0';
+	}
+}
+
+void
+prompt_find()
+{
+	close_menu();
+	open_prompt("", find_callback, find_step_callback, NULL, 1);
+}
+
 void
 prompt_command()
 {
 	close_menu();
-	open_prompt("", command_callback, NULL);
+	open_prompt("", command_callback, NULL, NULL, 0);
 }
 
 void
@@ -81,12 +123,13 @@ prompt_rename()
 {
 	if (is_menu_visible())
 		select_menu_item();
-	open_prompt(client_name(current_client()), rename_callback,
-	    current_client());
+	open_prompt(client_name(current_client()), rename_callback, NULL,
+	    current_client(), 0);
 }
 
 static void
-open_prompt(const char *initial, PromptCallback _callback, void *udata)
+open_prompt(const char *initial, PromptCallback _callback,
+    PromptCallback _step_callback, void *udata, int center)
 {
 	XEvent e;
 	XIM xim;
@@ -94,11 +137,17 @@ open_prompt(const char *initial, PromptCallback _callback, void *udata)
 	callback = _callback;
 	callback_udata = udata;
 
+	step_callback = _step_callback;
+
+	_want_centered = center;
+
 	if (initial != NULL) {
 		nprompt = mbstowcs(prompt, initial, sizeof(prompt));
 		prompt[nprompt] = '\0';
+		pos = nprompt;
 	} else {
 		nprompt = 0;
+		pos = 0;
 		prompt[nprompt] = '\0';
 	}
 
@@ -106,9 +155,15 @@ open_prompt(const char *initial, PromptCallback _callback, void *udata)
 		window = create_prompt();
 
 	set_font(FONT_TITLE);
-	XMoveResizeWindow(display(), window, STACK_X(current_stack()),
-	    STACK_Y(current_stack()), STACK_WIDTH(current_stack()),
-	    get_font_height());
+
+	if (_want_centered)
+		XMoveResizeWindow(display(), window, display_width() / 4,
+		    display_height() / 2, display_width() / 2,
+		    get_font_height());
+	else
+		XMoveResizeWindow(display(), window, STACK_X(current_stack()),
+		    STACK_Y(current_stack()), STACK_WIDTH(current_stack()),
+		    get_font_height());
 	XRaiseWindow(display(), window);
 	XMapWindow(display(), window);
 	draw_prompt();
@@ -174,8 +229,14 @@ keycode(XKeyEvent *e)
 			return 0;
 		case XK_BackSpace:
 		case XK_Delete:
-			if (nprompt > 0)
-				prompt[--nprompt] = '\0';
+			if (nprompt > 0 && pos > 0) {
+				prompt[--pos] = '\0';
+				nprompt--;
+			}
+			if (step_callback != NULL) {
+				wcstombs(s, prompt, sizeof(s));
+				step_callback(s, callback_udata);
+			}
 			return 1;
 	}
 
@@ -184,13 +245,20 @@ keycode(XKeyEvent *e)
 		n = 0;
 		return 1;
 	} else {
-		if ((ret = mbtowc(&prompt[nprompt], ch, n)) <= 0) {
+		if ((ret = mbtowc(&prompt[pos], ch, n)) <= 0) {
 			TRACE_LOG("trouble converting...");
-		} else
+		} else {
 			nprompt++;
+			pos++;
+		}
 
 		TRACE_LOG("mbtowc returns %d %zu\n", ret, MB_CUR_MAX);
 		prompt[nprompt] = '\0';
+	}
+
+	if (step_callback != NULL) {
+		wcstombs(s, prompt, sizeof(s));
+		step_callback(s, callback_udata);
 	}
 
 	return 1;
@@ -225,16 +293,32 @@ static void
 draw_prompt()
 {
 	char s[4096];
+	char s_until_pos[4096];
+	wchar_t prompt_until_pos[4096];
+	char ch[4 + 1];
+	wchar_t prompt_cursor[2];
 	XGlyphInfo extents;
 
 	XClearWindow(display(), window);
 
+	memcpy(prompt_until_pos, prompt, sizeof(prompt_until_pos));
+	prompt_until_pos[pos] = '\0';
+	wcstombs(s_until_pos, prompt_until_pos, sizeof(s_until_pos));
 	wcstombs(s, prompt, sizeof(s));
 
 	TRACE_LOG("s is: %s", s);
 
-	font_extents(s, strlen(s), &extents);
+	if (pos < nprompt && nprompt > 0) {
+		font_extents(s, strlen(s_until_pos), &extents);
+
+		prompt_cursor[0] = prompt[pos];
+		prompt_cursor[1] = '\0';
+		wcstombs(ch, prompt_cursor, sizeof(ch));
+		draw_font(window, extents.xOff, 0, COLOR_CURSOR, ch);
+	} else {
+		font_extents(s, strlen(s), &extents);
+		draw_font(window, extents.xOff, 0, COLOR_CURSOR, " ");
+	}
 
 	draw_font(window, 0, 0, -1, s);
-	draw_font(window, extents.xOff, 0, COLOR_CURSOR, " ");
 }

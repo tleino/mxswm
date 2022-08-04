@@ -191,6 +191,7 @@ void set_client_name(struct client *, const char *);
 void rename_client_name(struct client *, const char *);
 void delete_client(void);
 void destroy_client(void);
+struct client *match_client(const char *);
 
 unsigned short display_height(void);
 unsigned short display_width(void);
@@ -248,6 +249,7 @@ Time current_event_timestamp(void);
 
 void prompt_command(void);
 void prompt_rename(void);
+void prompt_find(void);
 
 #ifdef TRACE
 struct client *event_client();
