@@ -29,12 +29,7 @@ socket using 'mxswmctl' command.
 
 ## Feature TODO
 
-* Choose window by typing letters of its name (similar to
-reverse-search or ^R in shells).
-* Close windows from menu / close foreground window.
 * Xinerama (multi-screen) support (can be copied from cocowm).
-* Runtime configuration of max stack width (useful for setting sane
-maximums, or for setting the width for 80 column terminals).
 
 ## Default key bindings
 
