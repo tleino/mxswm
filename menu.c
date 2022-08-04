@@ -217,7 +217,7 @@ open_global_menu()
 	if (_global_menu_visible)
 		return;
 
-	currentp = NULL;
+	currentp = next_client(NULL, NULL);
 	if (_global_menu == 0)
 		create_global_menu();
 	_global_menu_visible = 1;
@@ -257,7 +257,10 @@ draw_global_menu()
 	if (_global_menu_visible == 0 || _global_menu == 0)
 		return;
 
-	client = current(NULL);
+	if (currentp == NULL)
+		currentp = current(NULL);
+
+	client = currentp;
 
 	XClearWindow(display(), _global_menu);
 	XRaiseWindow(display(), _global_menu);
