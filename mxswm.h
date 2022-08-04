@@ -205,6 +205,7 @@ void close_menu(void);
 void draw_global_menu(void);
 void open_global_menu(void);
 void close_global_menu(void);
+void reset_global_menu(void);
 
 void focus_menu_forward(void);
 void focus_menu_backward(void);

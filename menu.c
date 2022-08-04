@@ -29,6 +29,7 @@ static struct client *currentp;
 static int _menu_visible;
 static int _global_menu_visible;
 static int _highlight;
+static int _use_global_menu;
 
 static void move_menu_item(int);
 
@@ -173,7 +174,7 @@ select_move_menu_item()
 	struct client *client;
 
 	highlight_stacks(0);
-	if (_global_menu_visible) {
+	if (_global_menu_visible || _use_global_menu) {
 		client = current(NULL);
 		close_global_menu();
 		if (client != NULL)
@@ -212,6 +213,13 @@ select_menu_item_left()
 }
 
 void
+reset_global_menu()
+{
+	currentp = next_client(NULL, NULL);
+	_use_global_menu = 1;
+}
+
+void
 open_global_menu()
 {
 	if (_global_menu_visible)
@@ -228,8 +236,11 @@ open_global_menu()
 void
 close_global_menu()
 {
-	XUnmapWindow(display(), _global_menu);
-	_global_menu_visible = 0;
+	if (_global_menu_visible) {
+		XUnmapWindow(display(), _global_menu);
+		_global_menu_visible = 0;
+	}
+	_use_global_menu = 0;
 }
 
 void

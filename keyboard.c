@@ -231,9 +231,9 @@ win_on()
 void
 focus_next_immediately()
 {
-	focus_next();
+	reset_global_menu();
+	select_next_global_menu();
 	select_move_menu_item();
-	close_global_menu();
 }
 
 void
