@@ -37,6 +37,7 @@ static void control_off(void);
 static void control_on(void);
 static void win_on(void);
 void focus_next(void);
+void focus_next_immediately(void);
 static void restart(void);
 static void quit(void);
 
@@ -106,8 +107,12 @@ static const struct binding binding[] = {
 		NULL, select_move_menu_item
 	},
 	{
-		XK_Menu, Mod4Mask,
+		XK_Tab, Mod4Mask,
 		NULL, focus_next
+	},
+	{
+		XK_Menu, 0,
+		NULL, focus_next_immediately
 	},
 	{
 		XK_Down, Mod4Mask,
@@ -144,7 +149,7 @@ static const struct binding binding[] = {
 		NULL, toggle_stacks_maxwidth_override
 	},
 	{
-		XK_Tab, Mod4Mask,
+		XK_Return, Mod4Mask,
 		NULL, prompt_command
 	},
 	{
@@ -221,6 +226,14 @@ win_on()
 #if 0
 	open_menu();
 #endif
+}
+
+void
+focus_next_immediately()
+{
+	focus_next();
+	select_move_menu_item();
+	close_global_menu();
 }
 
 void

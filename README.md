@@ -49,11 +49,12 @@ maximums, or for setting the width for 80 column terminals).
 * **Shift+Win+Right** Move current stack to the right
 * **Win+S** Toggle sticky status for stack
 * **Win+H** Toggle hide other stacks (not counting sticky stacks)
-* **Win+Tab** Run command in this stack
+* **Win+Enter** Run command in this stack
 
 ### Clients
 
-* **Win+Menu** Cycle to next client in any stack
+* **Win+Tab** Cycle to previous clients in any stack
+* **Menu** Quickly focus previous client in any stack
 * **Win+Down** Select client / raise selected client
 * **Win+Up** Select client / raise selected client
 * **Win+q** Delete client
