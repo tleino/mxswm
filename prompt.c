@@ -25,6 +25,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <err.h>
 
 typedef void (*PromptCallback)(const char *, void *);
 
@@ -36,6 +38,7 @@ static void	 open_prompt(const char *, PromptCallback, PromptCallback,
 		    void *, int);
 
 static void	 command_callback(const char *, void *);
+static void	 command_step_callback(const char *, void *);
 static void	 rename_callback(const char *, void *);
 static void	 find_callback(const char *, void *);
 static void	 find_step_callback(const char *, void *);
@@ -56,15 +59,50 @@ static void
 command_callback(const char *s, void *udata)
 {
 	char ex[4096];
+	char *q;
+	int i;
 
 	if (s == NULL || strlen(s) == 0)
 		return;
 
+	q = strdup(s);
+	if (q == NULL) {
+		warn("strdup");
+		return;
+	}
+
+	/* Strip trailing spaces */
+	for (i = strlen(q)-1; i >= 0 && isspace(q[i]); i--)
+		q[i] = '\0';
+
+	if (add_command_to_history(q, 1))
+		save_command_history();
+
 	/* TODO: Use fork-exec here */
-	if (snprintf(ex, sizeof(ex), "%s &", s) < sizeof(ex)) {
+	if (snprintf(ex, sizeof(ex), "%s &", q) < sizeof(ex)) {
 		TRACE_LOG("Running %s", ex);
 		system(ex);
-	}	
+	}
+
+	free(q);
+}
+
+static void
+command_step_callback(const char *s, void *udata)
+{
+	const char *q;
+
+	q = match_command(s);
+	if (q != NULL) {
+		nprompt = mbstowcs(prompt, q, sizeof(prompt));
+		prompt[nprompt] = '\0';
+	} else if (s == NULL || s[0] == '\0') {
+		nprompt = 0;
+		prompt[nprompt] = '\0';
+	} else {
+		nprompt = pos;
+		prompt[pos] = '\0';
+	}
 }
 
 static void
@@ -115,7 +153,7 @@ void
 prompt_command()
 {
 	close_menu();
-	open_prompt("", command_callback, NULL, NULL, 0);
+	open_prompt("", command_callback, command_step_callback, NULL, 0);
 }
 
 void
@@ -253,7 +291,7 @@ keycode(XKeyEvent *e)
 		}
 
 		TRACE_LOG("mbtowc returns %d %zu\n", ret, MB_CUR_MAX);
-		prompt[nprompt] = '\0';
+		prompt[pos] = '\0';
 	}
 
 	if (step_callback != NULL) {

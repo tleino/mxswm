@@ -233,6 +233,11 @@ void set_statusbar_mapped_status(int);
 void hide_statusbar(void);
 void toggle_statusbar(void);
 
+
+int		 add_command_to_history(const char *, int reorder);
+void		 save_command_history(void);
+const char	*match_command(const char *s);
+
 void do_keyaction(XKeyEvent *);
 void unbind_keys();
 void bind_keys();
