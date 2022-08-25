@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include <string.h>
+#include <sys/wait.h>
 
 static void process_xevents(void);
 static void process_ctl_client(int);
@@ -157,6 +158,7 @@ run_ctlsocket_event_loop(int ctlfd)
 	int nready, i, j;
 	int maxfd;
 	int xfd;
+	int status;
 	Display *dpy;
 
 	dpy = display();
@@ -166,6 +168,11 @@ run_ctlsocket_event_loop(int ctlfd)
 	process_xevents();
 	running = 1;
 	while (running) {
+#ifndef WAIT_MYPGRP
+#define WAIT_MYPGRP 0
+#endif
+		(void) waitpid(WAIT_MYPGRP, &status, WNOHANG);
+
 		FD_ZERO(&rfds);
 		FD_SET(xfd, &rfds);
 		maxfd = xfd;

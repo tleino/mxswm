@@ -24,6 +24,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBrules.h>
@@ -181,6 +182,7 @@ main(int argc, char *argv[])
 	XEvent event;
 	Display *dpy;
 	int ctlfd;
+	int status;
 
 	/*
 	 * Store argv so that we can restart the window manager.
@@ -224,6 +226,10 @@ main(int argc, char *argv[])
 	} else {
 		running = 1;
 		while (running) {
+#ifndef WAIT_MYPGRP
+#define WAIT_MYPGRP 0
+#endif
+			(void) waitpid(WAIT_MYPGRP, &status, WNOHANG);
 			XNextEvent(dpy, &event);
 			if (handle_event(&event) <= 0)
 				break;

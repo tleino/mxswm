@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <err.h>
+#include <unistd.h>
 
 typedef void (*PromptCallback)(const char *, void *);
 
@@ -58,9 +59,10 @@ static void *callback_udata;
 static void
 command_callback(const char *s, void *udata)
 {
-	char ex[4096];
-	char *q;
+	char *q, *p, *sh;
 	int i;
+	pid_t pid;
+	size_t sz;
 
 	if (s == NULL || strlen(s) == 0)
 		return;
@@ -75,14 +77,46 @@ command_callback(const char *s, void *udata)
 	for (i = strlen(q)-1; i >= 0 && isspace(q[i]); i--)
 		q[i] = '\0';
 
+	sz = strlen(q) + strlen("exec ") + 1;
+	p = malloc(sz);
+	if (p == NULL) {
+		warn("malloc");
+		return;
+	}
+	if (snprintf(p, sz, "exec %s", q) >= sz) {
+		warnx("truncated '%s'", p);
+		return;
+	}
+
 	if (add_command_to_history(q, 1))
 		save_command_history();
 
-	/* TODO: Use fork-exec here */
-	if (snprintf(ex, sizeof(ex), "%s &", q) < sizeof(ex)) {
-		TRACE_LOG("Running %s", ex);
-		system(ex);
+	sh = getenv("SHELL");
+	if (sh == NULL) {
+		warn("getenv SHELL");
+		sh = "/bin/sh";
 	}
+	pid = fork();
+	if (pid == 0) {
+#ifndef OPT_SH_FLAGS
+#define OPT_SH_FLAGS "i"
+#endif
+		/*
+		 * We use 'i' flag here, so that the shell would read
+		 * a startup script, so that we can e.g. support aliases.
+		 *
+		 * This might be a good or a bad thing. Alternatively
+		 * we would need to support our own aliases, which might
+		 * be a good idea, because aliases for mxswm might be
+		 * different than aliases for interactive shell.
+		 *
+		 * Please note you may have to set 'ENV' variable so
+		 * that the shell would execute a non-login startup
+		 * script.
+		 */
+		execl(sh, sh, "-" OPT_SH_FLAGS "c", p, NULL);
+	} else if (pid == -1)
+		warn("fork");
 
 	free(q);
 }
