@@ -105,6 +105,7 @@ struct stack {
 	int hidden;
 	int sticky;
 	int mapped;
+	int monitor;
 };
 
 struct client {
@@ -133,13 +134,15 @@ struct client {
 int get_utf8_property(Window, Atom, char **);
 
 struct stack *add_stack(struct stack *);
+struct stack *add_stack_to_monitor(struct stack *, int);
 struct stack *have_stack(Window);
+struct stack *last_stack(void);
 void remove_stack(struct stack *);
 void draw_stack(struct stack *);
 void add_stack_here(void);
 void remove_stack_here(void);
 void resize_stacks(void);
-void modify_stacks_height(int);
+void adjust_stacks_height(int);
 void focus_stack(struct stack *);
 void focus_stack_forward(void);
 void focus_stack_backward(void);
@@ -193,8 +196,11 @@ void delete_client(void);
 void destroy_client(void);
 struct client *match_client(const char *);
 
-unsigned short display_height(void);
-unsigned short display_width(void);
+int monitors(void);
+int monitor(int, int);
+int monitor_x(int);
+unsigned short display_height(int);
+unsigned short display_width(int);
 Display *display(void);
 
 int handle_event(XEvent *);

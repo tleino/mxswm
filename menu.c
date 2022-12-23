@@ -77,12 +77,13 @@ create_global_menu()
 	XSetWindowAttributes a;
 	unsigned long v;
 
-	w = display_width() / 2;
+	/* TODO: Show menu on the monitor which has the focused stack */
+	w = display_width(0) / 2;
 
 	set_font(FONT_NORMAL);
 	h = get_font_height();
 	x = w/2;
-	y = display_height() / 2 - (h/2);
+	y = display_height(0) / 2 - (h/2);
 	v = CWBackPixel | CWOverrideRedirect;
 	a.background_pixel = query_color(COLOR_TITLE_BG_FOCUS).pixel;
 	a.override_redirect = True;

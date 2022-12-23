@@ -29,16 +29,16 @@
 static struct stack *_head;
 static struct stack *_focus;
 static int _highlight;
-static int _stack_height;
+static int _stack_height_adj;
 
 static void create_stack_titlebar(struct stack *);
 static int stack_width(int, int, int);
 static struct stack *next_stack(struct stack *);
 static struct stack *prev_stack(struct stack *);
 static struct stack *first_stack(void);
-static struct stack *last_stack(void);
 static void hide_stack(struct stack *);
 static void show_stack(struct stack *);
+static void focus_stack_backward_on_monitor(int);
 
 static int maxwidth_override;
 
@@ -92,6 +92,9 @@ first_stack()
 	struct stack *np;
 
 	np = _head;
+	if (np == NULL)
+		add_stack(NULL);
+	np = _head;
 	assert(np != NULL);
 
 	while (np && np->hidden)
@@ -101,7 +104,7 @@ first_stack()
 	return np;
 }
 
-static struct stack *
+struct stack *
 last_stack()
 {
 	struct stack *np;
@@ -454,7 +457,7 @@ stack_width(int avg, int prefer, int surplus)
 }
 
 void
-resize_stacks()
+resize_stacks_for_monitor(int _monitor)
 {
 	struct stack *np;
 	int avg, width, surplus, total, total_surplus;
@@ -462,15 +465,21 @@ resize_stacks()
 	size_t n, n_want_surplus;
 
 	n = 0;
-	for (np = first_stack(); np != NULL; np = next_stack(np))
+	for (np = first_stack(); np != NULL; np = next_stack(np)) {
+		if (np->monitor != _monitor)
+			continue;
 		n++;
+	}
 
 	/*
 	 * Client width here is calculated to be its width + BORDERWIDTH,
 	 * keeping things simple, but we need to account for the initial
 	 * BORDERWIDTH.
 	 */
-	avg = (display_width() - BORDERWIDTH);
+	avg = (display_width(_monitor) - BORDERWIDTH);
+
+	if (n == 0)
+		return;
 	avg /= n;
 
 	/*
@@ -480,6 +489,9 @@ resize_stacks()
 	surplus = 0;
 	n_want_surplus = 0;
 	for (np = first_stack(); np != NULL; np = next_stack(np)) {
+		if (np->monitor != _monitor)
+			continue;
+
 		if (np->prefer_width > 0) {
 			width = stack_width(avg, np->prefer_width, 0);
 			surplus += (stack_width(avg, 0, 0) - width);
@@ -494,21 +506,37 @@ resize_stacks()
 	 */
 	total = 0;
 	for (np = first_stack(); np != NULL; np = next_stack(np)) {
+		if (np->monitor != _monitor)
+			continue;
+
 		width = stack_width(avg, np->prefer_width, surplus);
 		total += width;
 	}
-	total_surplus = display_width() - BORDERWIDTH - total;
+	total_surplus = display_width(_monitor) - BORDERWIDTH - total;
 
 	/*
 	 * Resize and move.
 	 */
-	x = BORDERWIDTH + (total_surplus/2);
+	x = BORDERWIDTH + (total_surplus/2) +
+	    monitor_x(_monitor);
 	for (np = first_stack(); np != NULL; np = next_stack(np)) {
+		if (np->monitor != _monitor)
+			continue;
+
 		np->x = x;
 		width = stack_width(avg, np->prefer_width, surplus);
 		resize_stack(np, width - BORDERWIDTH);
 		x += width;
 	}
+}
+
+void
+resize_stacks()
+{
+	int i;
+
+	for (i = 0; i < monitors(); i++)
+		resize_stacks_for_monitor(i);
 }
 
 void
@@ -530,19 +558,21 @@ remove_stack_here()
 }
 
 void
-modify_stacks_height(int height)
+adjust_stacks_height(int adj)
 {
 	struct stack *np;
 
-	_stack_height = height;
-	for (np = first_stack(); np != NULL; np = next_stack(np))
-		np->height = _stack_height;
+	_stack_height_adj = adj;
+	for (np = first_stack(); np != NULL; np = next_stack(np)) {
+		np->height = display_height(np->monitor) - get_font_height() -
+		    _stack_height_adj;
+	}
 
 	resize_stacks();
 }
 
 struct stack *
-add_stack(struct stack *after)
+add_stack_to_monitor(struct stack *after, int monitor)
 {
 	struct stack *stack;
 
@@ -551,13 +581,13 @@ add_stack(struct stack *after)
 		return NULL;
 
 	set_font(FONT_TITLE);
-	if (_stack_height == 0)
-		_stack_height = display_height() - get_font_height();
-	stack->height = _stack_height;
+	stack->height = display_height(monitor) - get_font_height() -
+	    _stack_height_adj;
 	stack->width = 0;
-	stack->x = 0;
+	stack->x = monitor_x(monitor);
 	stack->y = 0;
 	stack->prefer_width = 0;
+	stack->monitor = monitor;
 
 	stack->prev = after;
 	if (after != NULL) {
@@ -594,14 +624,23 @@ add_stack(struct stack *after)
 	return stack;
 }
 
+struct stack *
+add_stack(struct stack *after)
+{
+	if (after != NULL)
+		return add_stack_to_monitor(after, after->monitor);
+	else
+		return add_stack_to_monitor(after, 0);
+}
+
 void
 remove_stack(struct stack *stack)
 {
 	struct client *client;
 
-	focus_stack_backward();
+	focus_stack_backward_on_monitor(stack->monitor);
 	if (_focus == stack) {
-		warnx("cannot remove last stack");
+		warnx("cannot remove last stack on monitor %d", stack->monitor);
 		return;
 	}
 
@@ -669,6 +708,38 @@ focus_stack_forward()
 
 	sp = current_stack();
 	focus_stack(next_stack(sp) != NULL ? next_stack(sp) : first_stack());
+
+	if (was_visible) {
+		hide_menu();
+		show_menu();
+	}
+}
+
+static void
+focus_stack_backward_on_monitor(int mon)
+{
+	struct stack *sp;
+	int was_visible;
+	struct stack *np;
+
+	was_visible = is_menu_visible();
+
+	sp = current_stack();
+
+	np = prev_stack(sp);
+	if (np == NULL || np->monitor != mon) {
+		np = last_stack();
+		while (np != NULL && np->monitor != mon)
+			np = prev_stack(np);
+
+		if (np == sp)
+			return;
+
+		focus_stack(np);
+		return;
+	}
+
+	focus_stack(np);
 
 	if (was_visible) {
 		hide_menu();

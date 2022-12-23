@@ -229,8 +229,8 @@ open_prompt(const char *initial, PromptCallback _callback,
 	set_font(FONT_TITLE);
 
 	if (_want_centered)
-		XMoveResizeWindow(display(), window, display_width() / 4,
-		    display_height() / 2, display_width() / 2,
+		XMoveResizeWindow(display(), window, display_width(0) / 4,
+		    display_height(0) / 2, display_width(0) / 2,
 		    get_font_height());
 	else
 		XMoveResizeWindow(display(), window, STACK_X(current_stack()),
@@ -343,12 +343,13 @@ create_prompt()
 	XSetWindowAttributes a;
 	unsigned long v;
 
-	w = display_width() / 2;
+	/* TODO: Show the prompt on the monitor which has the focused stack */
+	w = display_width(0) / 2;
 
 	set_font(FONT_NORMAL);
 	h = get_font_height();
 	x = w/2;
-	y = display_height() / 2 - (h/2);
+	y = display_height(0) / 2 - (h/2);
 	v = CWBackPixel | CWOverrideRedirect;
 	a.background_pixel = query_color(COLOR_TITLE_BG_FOCUS).pixel;
 	a.override_redirect = True;

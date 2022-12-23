@@ -28,8 +28,11 @@
 
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBrules.h>
+#include <X11/extensions/Xrandr.h>
 
 Display *_display;
+XRRMonitorInfo *_monitors;
+int _nmonitors;
 
 static void select_root_events(Display *);
 static int wm_rights_error(Display *, XErrorEvent *);
@@ -117,6 +120,38 @@ manageable(Window w, int *mapped)
 }
 
 static void
+init_xrandr(Display *dpy)
+{
+	int evbase, errbase;
+	Bool ret;
+	int maj, min;
+
+	/* Check availability of the extension */
+	ret = XRRQueryExtension(dpy, &evbase, &errbase);
+	if (ret == False) {
+		warnx("fail: XRANDR");
+		return;
+	}
+
+	/* Check extension version */
+	if (!XRRQueryVersion(dpy, &maj, &min)) {
+		warnx("fail: XRRQueryVersion");
+		return;
+	}
+	if (maj < 1 || min < 3) {
+		warnx("fail: XRANDR v1.3 or newer is required");
+		return;
+	}
+
+	_monitors = XRRGetMonitors(dpy,
+	    DefaultRootWindow(dpy), True, &_nmonitors);
+	if (_monitors == NULL) {
+		warnx("fail: XRRGetMonitors");
+		return;
+	}
+}
+
+static void
 open_display()
 {
 	char *denv;
@@ -133,6 +168,8 @@ open_display()
                	else
                        	errx(1, "failed X11 connection to '%s'", denv);
 	}
+
+	init_xrandr(_display);
 
 	/*
 	 * We use XKB extension because XKeycodeToKeysym is deprecated,
@@ -159,20 +196,67 @@ display()
 	return _display;
 }
 
-unsigned short
-display_width()
+int
+monitors()
 {
-	Display *dpy = display();
+	if (_nmonitors == 0)
+		return 1;
 
-	return DisplayWidth(dpy, DefaultScreen(dpy));
+	return _nmonitors;
+}
+
+int
+monitor(int x, int y)
+{
+	int i;
+	XRRMonitorInfo *m;
+
+	for (i = 0; i < _nmonitors; i++) {
+		m = &_monitors[i];
+
+		if (x >= m->x && x < m->x + m->width &&
+		    y >= m->y && y < m->y + m->height)
+			return i;
+	}
+
+	return 0;
+}
+
+int
+monitor_x(int monitor)
+{
+	if (_monitors == NULL)
+		return 0;
+
+	return _monitors[monitor].x;
 }
 
 unsigned short
-display_height()
+display_width(int monitor)
 {
-	Display *dpy = display();
+	Display *dpy;
 
-	return DisplayHeight(dpy, DefaultScreen(dpy));
+	if (_monitors == NULL) {
+		dpy = display();
+
+		return DisplayWidth(dpy, DefaultScreen(dpy));
+	}
+
+	return _monitors[monitor].width;
+}
+
+unsigned short
+display_height(int monitor)
+{
+	Display *dpy;
+
+	if (_monitors == NULL) {
+		dpy = display();
+
+		return DisplayHeight(dpy, DefaultScreen(dpy));
+	}
+
+	return _monitors[monitor].height;
 }
 
 int
@@ -183,6 +267,7 @@ main(int argc, char *argv[])
 	Display *dpy;
 	int ctlfd;
 	int status;
+	int i;
 
 	/*
 	 * Store argv so that we can restart the window manager.
@@ -208,11 +293,15 @@ main(int argc, char *argv[])
 
 	bind_keys();
 
+	add_stack(NULL);
+	for (i = 1; i < _nmonitors; i++)
+		add_stack_to_monitor(last_stack(), i);
+
 	run_ctl_lines();
 
-	resize_stacks();
-
 	capture_existing_windows(dpy);
+
+	resize_stacks();
 
 	focus_stack(find_stack(1));
 
@@ -235,6 +324,9 @@ main(int argc, char *argv[])
 				break;
 		}
 	}
+
+	if (_monitors != NULL)
+		XRRFreeMonitors(_monitors);
 
 	XSync(dpy, False);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
