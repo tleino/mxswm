@@ -2,7 +2,8 @@
 
 *mxswm* is a MaXed Stacks Window Manager for X11. This window manager
 keeps windows in a number of stacks of same size and
-allows quick changing between the windows using keyboard.
+allows quick changing between the windows using keyboard. It has basic
+support for multiple monitors.
 
 This is useful for people who hate micromanaging the position and size
 of windows using mouse.
@@ -26,10 +27,6 @@ At the moment *mxswm* mostly works, but is not flawless. Also, requires manual
 customization from mxswm.h for e.g. setting the fonts and borders. There
 is some initial support for runtime configuration through a Unix domain
 socket using 'mxswmctl' command.
-
-## Feature TODO
-
-* Xinerama (multi-screen) support (can be copied from cocowm).
 
 ## Default key bindings
 
